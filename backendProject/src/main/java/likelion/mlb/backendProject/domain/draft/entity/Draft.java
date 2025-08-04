@@ -1,33 +1,26 @@
 package likelion.mlb.backendProject.domain.draft.entity;
 
-
 import jakarta.persistence.*;
-import likelion.mlb.backendProject.global.jpa.entity.BaseTime;
-import lombok.*;
+import likelion.mlb.backendProject.global.staticdata.entity.Round;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 
-
-/**
- * 드래프트방 엔티티
- * */
 @Entity
-@Table(name="draft")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "draft")
+@Getter
+@Setter
 public class Draft {
 
     @Id
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(name = "id", nullable = false)
     private UUID id;
 
-    /*
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "round_id") // 라운드 외래키
-    private Round round;
-    */
+    @Column(name = "room_num", nullable = false)
+    private int roomNum = 0;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "round_id", nullable = false)
+    private Round round;
 }
