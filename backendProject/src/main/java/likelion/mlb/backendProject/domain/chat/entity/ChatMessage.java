@@ -27,7 +27,7 @@ public class ChatMessage {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "messagetype", nullable = false)
-    private MessageType messagetype;
+    private MessageType messageType;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
