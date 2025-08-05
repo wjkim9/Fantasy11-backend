@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 
-public interface RoundRepository extends JpaRepository<Round,Long> {
+public interface RoundRepository extends JpaRepository<Round,UUID> {
     Round findFirstByStartedAtAfterOrderByStartedAtAsc(LocalDateTime now);
 }

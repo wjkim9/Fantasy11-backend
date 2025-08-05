@@ -1,6 +1,8 @@
 package likelion.mlb.backendProject.domain.chat.entity;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import likelion.mlb.backendProject.domain.draft.entity.Draft;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,4 +26,21 @@ public class ChatRoom {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "draft_id", nullable = false)
     private Draft draft;
+
+    @OneToMany(
+        mappedBy = "chatRoom",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
+    private List<ChatMessage> messages = new ArrayList<>();
+
+    public void addMessage(ChatMessage msg) {
+        messages.add(msg);
+        msg.setChatRoom(this);
+    }
+
+    public void removeMessage(ChatMessage msg) {
+        messages.remove(msg);
+        msg.setChatRoom(null);
+    }
 }
