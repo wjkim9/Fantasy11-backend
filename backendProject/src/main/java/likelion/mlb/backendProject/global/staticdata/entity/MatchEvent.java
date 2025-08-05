@@ -1,19 +1,21 @@
 package likelion.mlb.backendProject.global.staticdata.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "match_event")
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
-@Setter
+@Builder
 public class MatchEvent {
 
+    @GeneratedValue
     @Id
-    @Column(name = "id", nullable = false)
+    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(name = "event_type", nullable = false)
