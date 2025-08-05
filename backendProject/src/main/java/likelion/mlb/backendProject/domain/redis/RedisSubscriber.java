@@ -2,7 +2,8 @@ package likelion.mlb.backendProject.domain.redis;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import likelion.beanBa.backendProject.chatting.dto.ChattingRequest;
+
+import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -22,9 +23,9 @@ public class RedisSubscriber implements MessageListener {
 
         try {
             String msgBody = new String(message.getBody());
-            ChattingRequest chattingRequest = objectMapper.readValue(msgBody, ChattingRequest.class);
+            DraftRequest draftRequest = objectMapper.readValue(msgBody, DraftRequest.class);
 
-            simpMessagingTemplate.convertAndSend("/topic/room." + chattingRequest.getRoomPk(), chattingRequest);
+            simpMessagingTemplate.convertAndSend("/topic/room." + draftRequest.getDraftId(), draftRequest);
         } catch (Exception e) {
 
         }

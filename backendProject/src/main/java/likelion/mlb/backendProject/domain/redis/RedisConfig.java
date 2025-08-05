@@ -48,8 +48,7 @@ public class RedisConfig {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
 
-        container.addMessageListener(new MessageListenerAdapter(redisSubscriber), new PatternTopic("room.*")); // 일반 대화
-        container.addMessageListener(new MessageListenerAdapter(redisSubscriber), new PatternTopic("private.*")); // 귓속말
+        container.addMessageListener(new MessageListenerAdapter(redisSubscriber), new PatternTopic("room.*")); // 선수 드래프트
 
         return container;
     }
