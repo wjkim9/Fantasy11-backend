@@ -61,6 +61,9 @@ dependencies {
 	/* JSONObject */
 	implementation 'org.json:json:20240303'
 
+	/* env 파일 springboot 에서 사용을 위해 */
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
 }
 
 tasks.named('test') {
