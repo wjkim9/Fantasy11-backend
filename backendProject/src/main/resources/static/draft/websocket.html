@@ -62,8 +62,8 @@
                 <input type="text" id="room" placeholder="방 번호">
 <!--                <input type="text" id="postPk" placeholder="postPk">-->
 <!--                <input type="text" id="memberPk" placeholder="방 번호">-->
-                <button onclick="connect()">Connect</button>
-<!--                <button onclick="connect2()">Connect2</button>-->
+<!--                <button onclick="connect()">Connect</button>-->
+                <button onclick="connect2()">Connect2</button>
             </div>
 
             <!-- 귓속말 대상 -->
@@ -90,18 +90,9 @@
 
             window.onload = function () {
 <!--                loadRoomList();-->
-                    const socket = new WebSocket('/api/ws-chat?memberPk=19');
-                    stompClient = Stomp.over(socket);
+<!--                    const socket = new WebSocket('/api/ws-chat?memberPk=19');-->
+<!--                    stompClient = Stomp.over(socket);-->
 
-                    stompClient.connect({}, function (frame) {
-
-                        //일반채팅
-                        stompClient.subscribe(`/all`, function (chat) {
-                            console.log("메시지 수신!");
-                        });
-
-
-                });
             };
 
             function loadRoomList() {
@@ -197,7 +188,7 @@
 
 
                     //일반채팅
-                    stompClient.subscribe(`/topic/room.${roomId}`, function (chat) {
+                    stompClient.subscribe(`/topic/room.a1c2d3e4-f5b6-4789-9abc-1234567890ab`, function (chat) {
                         const message = JSON.parse(chat.body);
                         showMessage(message.from, message.message, message.messageAt);
                     });
@@ -215,80 +206,14 @@
 
 
             async function connect2() {
-                let postPk = document.getElementById("postPk").value;
-                let memberPk = document.getElementById("memberPk").value;
 
-                let response;
-                try {
-                    response = await fetchWithAuth(`/api/chatting/openChattingRoom`, {
-                        method: "POST",
-                        credentials: "include",
-                        headers: Object.assign(
-                            { "Content-Type": "application/json" },
-                            (localStorage.getItem("accessToken"))
-                                ? { "Authorization": "Bearer " + localStorage.getItem("accessToken") }
-                                : {}
-                        ),
-                        body: JSON.stringify({ "postPk": postPk }) // 👈 필요한 요청 body 넣기
-                    });
-
-                    console.log("response : ", response);
-                    if (!response.ok) {
-                        const errorText = await response.text(); // 혹은 .json()도 가능
-                        throw new Error("서버 오류: " + errorText);
-                    }
-
-                    const roomId = await response.json(); // 서버에서 보낸 chattingRoom.getId()
-                    console.log("생성된 채팅방 ID:", roomId);
-
-                    // 여기서 roomId를 다른 로직에 사용
-                    // 예: 채팅방으로 이동
-                    // window.location.href = `/chat/${roomId}`;
-
-                    return roomId;
-                } catch (error) {
-                    console.error("채팅방 생성 중 오류:", error);
-                }
-
-
-                const socket = new WebSocket('/api/ws-chat?memberPk='+memberPk);
+<!--                const socket = new WebSocket('/api/ws-draft?participantId=1');-->
+                const socket = new WebSocket('/api/ws-draft');
                 stompClient = Stomp.over(socket);
 
                 stompClient.connect({}, function (frame) {
                     // 채팅방 입장할 때 채팅창을 초기화
                     document.getElementById("chatArea").innerHTML = "";
-
-                    fetchWithAuth(`api/chatting/getMessageList?roomPk=`+roomPk, {
-                        method: "GET",
-                        credentials: "include",
-                        headers: Object.assign(
-                            { "Content-Type": "application/json" },
-                            localStorage.getItem("accessToken")
-                                ? { "Authorization": "Bearer " + localStorage.getItem("accessToken") }
-                                : {}
-                        )
-                    })
-                    .then(response => {
-
-                        console.log("response is ",response);
-                        if (!response.ok) {
-                            const text = response.text();
-                            console.error("HTML 에러 응답 : ", text);
-                            throw new Error("메시지 목록을 불러오지 못했습니다.");
-                        }
-                        return response.json();
-                    })
-                    .then(messageList => {
-                        console.log("채팅 메시지 리스트:", messageList);
-                        // 여기서 messageList를 렌더링하거나 상태에 저장
-                        messageList.forEach(message => {
-                           showSysMsg(`[${message.message}]`);
-                        });
-
-                    })
-                    .catch(error => {
-                        console.error("에러 발생:", error);
-                    });
 
                     document.getElementById("chatWrapper").classList.remove("hidden");
                     document.getElementById("enterRow").classList.add("hidden");
@@ -298,20 +223,11 @@
 
 
                     //일반채팅
-                    stompClient.subscribe(`/topic/room.${roomId}`, function (chat) {
+                    stompClient.subscribe(`/topic/room.a1c2d3e4-f5b6-4789-9abc-1234567890ab`, function (chat) {
                         const message = JSON.parse(chat.body);
-                        showMessage(message.from, message.message);
+                        showMessage(message.participantId, message.playerId);
                     });
-
-                    //귓속말
-                    stompClient.subscribe('/user/queue/private', function (message) {
-                        const msg = JSON.parse(message.body);
-                        alert("💬 귓속말: " + msg.from + " - " + msg.message);
-                    });
-
                 });
-
-
             }
 
             function disconnect() {
@@ -331,24 +247,20 @@
 
                 const toUser = document.getElementById("whisperTo").value.trim();
 
-                if (!nickname || !msg || !roomId) {
-                    alert("모든 정보를 입력해주세요!");
-                    return;
-                }
+<!--                if (!nickname || !msg || !roomId) {-->
+<!--                    alert("모든 정보를 입력해주세요!");-->
+<!--                    return;-->
+<!--                }-->
 
                 const payload = {
-                    postPk: 101,
-                    message: msg,
-                    roomPk: 8
+                    draftId: "a1c2d3e4-f5b6-4789-9abc-1234567890ab",
+                    participantId: "0f1e2d3c-4b5a-6789-abcd-0987654321fe",
+                    playerId: "123e4567-e89b-12d3-a456-426614174000"
                 };
 
                 console.log("msg = ",msg)
 
-                if (toUser) {
-                    payload.to = toUser; // 귓속말 대상이 있으면 to 추가
-                }
-
-                stompClient.send("/api/chatting/sendMessage", {}, JSON.stringify(payload));
+                stompClient.send("/api/draft/selectPlayer", {}, JSON.stringify(payload));
                 document.getElementById("msg").value = "";
             }
 
