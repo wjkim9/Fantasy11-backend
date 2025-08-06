@@ -26,13 +26,22 @@ public class MatchHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        sessions.add(session);
-
         String userId = UUID.randomUUID().toString();
         session.getAttributes().put("userId", userId);
-        log.info("WebSocket 연결됨: {}", session.getId());
+        sessions.add(session); // 💡 꼭 추가해줘야 broadcast에 포함됨
 
-        session.sendMessage(new TextMessage("{\"type\":\"USER_ID\",\"userId\":\"" + userId + "\"}"));
+        log.info("🟢 WebSocket 연결됨: {}", session.getId());
+
+        if (session.isOpen()) {
+            try {
+                session.sendMessage(new TextMessage("{\"type\":\"USER_ID\",\"userId\":\"" + userId + "\"}"));
+            } catch (IOException e) {
+                log.warn("⛔ 세션 {} 전송 실패 → 제거: {}", session.getId(), e.getMessage());
+                sessions.remove(session);
+            }
+        } else {
+            log.warn("❌ 연결은 됐지만 session이 열려있지 않음");
+        }
     }
 
     @Override
@@ -86,6 +95,7 @@ public class MatchHandler extends TextWebSocketHandler {
                 }
             } catch (IOException e) {
                 log.warn("WebSocket 전송 실패: {}", e.getMessage());
+                sessions.remove(s);
             }
         }
     }

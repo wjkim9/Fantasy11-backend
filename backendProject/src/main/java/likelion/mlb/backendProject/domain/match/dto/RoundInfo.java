@@ -7,10 +7,9 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class MatchStatusResponse {
-    private long count;
-    private String state;
-    private String remainingTime;
-    private RoundInfo round;
+public class RoundInfo {
+    private UUID id;
+    private short no;
+    private String openAt;
+    private String lockAt;
 }
-

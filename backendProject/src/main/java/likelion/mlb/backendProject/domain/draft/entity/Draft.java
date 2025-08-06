@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class Draft {
-
+//FIXME : isDeleted 추가할 것. DDL에도 반영할 것
     @Id
     @Column(name = "id", nullable = false)
     private UUID id;

@@ -3,6 +3,7 @@ package likelion.mlb.backendProject.domain.match.service;
 import likelion.mlb.backendProject.domain.match.dto.DraftWindow;
 import likelion.mlb.backendProject.domain.match.dto.MatchStatusResponse;
 import likelion.mlb.backendProject.domain.match.dto.MatchUuidResponse;
+import likelion.mlb.backendProject.domain.match.dto.RoundInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -47,10 +48,12 @@ public class MatchService {
                 userCount,
                 state,
                 remaining,
-                draftWindow.getRoundId(),
-                draftWindow.getRoundNo(),
-                draftWindow.getOpenAt().toString(),
-                draftWindow.getLockAt().toString()
+                new RoundInfo(
+                        draftWindow.getRoundId(),
+                        draftWindow.getRoundNo(),
+                        draftWindow.getOpenAt().toString(),
+                        draftWindow.getLockAt().toString()
+                )
         );
     }
 
