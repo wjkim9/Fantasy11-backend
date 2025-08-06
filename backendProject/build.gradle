@@ -37,7 +37,7 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	// Redis 기본 연동 (Lettuce 사용)
-	//implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	// WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -49,7 +49,7 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0"
 
 	/* Redis-Cache */
-	//implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 	/* ElasticSearch */
 	//implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'

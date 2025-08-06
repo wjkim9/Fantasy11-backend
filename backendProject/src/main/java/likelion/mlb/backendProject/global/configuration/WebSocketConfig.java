@@ -15,13 +15,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-  private final MatchHandler matchHandler;
-
-  @Override
-  public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-      registry.addHandler(matchHandler, "/ws/match")
-              .setAllowedOrigins("*");
-  }
   /**
    * 메시지 브로커 설정
    * - enableSimpleBroker: 서버에서 구독한 클라이언트로 메시지를 브로드캐스트할 경로
@@ -43,8 +36,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/ws-chat")
-        .setAllowedOriginPatterns("*")
-        .withSockJS();
+            .setAllowedOriginPatterns("*")
+            .withSockJS();
   }
 }
-
