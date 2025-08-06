@@ -3,6 +3,7 @@ package likelion.mlb.backendProject.domain.user.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Table(name = "user")
 @Getter
 @Setter
+@NoArgsConstructor
 public class User {
 
     @Id
@@ -42,6 +44,5 @@ public class User {
         this.role = role;
         this.createdAt = LocalDateTime.now();
     }
-
-
+    
 }
