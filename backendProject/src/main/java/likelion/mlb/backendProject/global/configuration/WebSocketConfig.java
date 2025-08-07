@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.global.configuration;
 
+import likelion.mlb.backendProject.domain.draft.handler.CustomHandshakeHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -24,7 +25,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void configureMessageBroker(MessageBrokerRegistry config) {
     config.enableSimpleBroker("/topic");
-    config.setApplicationDestinationPrefixes("/app");
+    config.setApplicationDestinationPrefixes("/app", "/api");
   }
 
   /**
@@ -36,7 +37,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/ws-chat")
-            .setAllowedOriginPatterns("*")
-            .withSockJS();
+        .setAllowedOriginPatterns("*")
+        .withSockJS();
+
+    // 드래프트 웹소켓 통신 시 '/ws-draft' path를 통해 http 요청하여 웹소켓 연결
+    registry.addEndpoint("/api/ws-draft")
+            .setHandshakeHandler(new CustomHandshakeHandler())
+            .setAllowedOriginPatterns("*");
+
   }
 }
