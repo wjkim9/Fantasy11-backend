@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.match.handler;
 
 import likelion.mlb.backendProject.domain.match.dto.MatchStatusResponse;
+import likelion.mlb.backendProject.domain.match.dto.RoundInfo;
 import likelion.mlb.backendProject.domain.match.service.MatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,23 +27,45 @@ public class MatchHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        //FIXME 로그인 구현 후 실제 유저 PK를 받아올 것.
         String userId = UUID.randomUUID().toString();
         session.getAttributes().put("userId", userId);
-        sessions.add(session); // 💡 꼭 추가해줘야 broadcast에 포함됨
+        sessions.add(session);
 
         log.info("🟢 WebSocket 연결됨: {}", session.getId());
 
         if (session.isOpen()) {
             try {
+                // ✅ 1. USER_ID 전송
                 session.sendMessage(new TextMessage("{\"type\":\"USER_ID\",\"userId\":\"" + userId + "\"}"));
+
+                // ✅ 2. STATUS 즉시 전송
+                MatchStatusResponse status = matchService.getCurrentStatus();
+                JSONObject response = new JSONObject();
+                response.put("type", "STATUS");
+                response.put("count", status.getCount());
+                response.put("remainingTime", status.getRemainingTime());
+                response.put("state", status.getState());
+
+                JSONObject round = new JSONObject();
+                round.put("no", status.getRound().getNo());
+                round.put("id", status.getRound().getId());
+                round.put("openAt", status.getRound().getOpenAt());
+                round.put("lockAt", status.getRound().getLockAt());
+
+                response.put("round", round);
+
+                session.sendMessage(new TextMessage(response.toString()));
+
             } catch (IOException e) {
-                log.warn("⛔ 세션 {} 전송 실패 → 제거: {}", session.getId(), e.getMessage());
+                log.warn("초기 메시지 전송 실패 → 세션 제거: {}", e.getMessage());
                 sessions.remove(session);
             }
         } else {
             log.warn("❌ 연결은 됐지만 session이 열려있지 않음");
         }
     }
+
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
@@ -88,6 +111,16 @@ public class MatchHandler extends TextWebSocketHandler {
         response.put("remainingTime", status.getRemainingTime());
         response.put("state", status.getState());
 
+        RoundInfo round = status.getRound();
+        if (round != null) {
+            JSONObject roundJson = new JSONObject();
+            roundJson.put("id", round.getId().toString());
+            roundJson.put("no", round.getNo());
+            roundJson.put("openAt", round.getOpenAt());
+            roundJson.put("lockAt", round.getLockAt());
+            response.put("round", roundJson);
+        }
+
         for (WebSocketSession s : sessions) {
             try {
                 if (s.isOpen()) {
@@ -99,4 +132,5 @@ public class MatchHandler extends TextWebSocketHandler {
             }
         }
     }
+
 }

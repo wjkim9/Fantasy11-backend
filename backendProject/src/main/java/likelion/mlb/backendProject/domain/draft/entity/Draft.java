@@ -2,8 +2,7 @@ package likelion.mlb.backendProject.domain.draft.entity;
 
 import jakarta.persistence.*;
 import likelion.mlb.backendProject.global.staticdata.entity.Round;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -11,14 +10,20 @@ import java.util.UUID;
 @Table(name = "draft")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Draft {
-//FIXME : isDeleted 추가할 것. DDL에도 반영할 것
+
     @Id
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "room_num", nullable = false)
-    private int roomNum = 0;
+    @Column(name = "room_no", nullable = false)
+    private long roomNo;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "round_id", nullable = false)

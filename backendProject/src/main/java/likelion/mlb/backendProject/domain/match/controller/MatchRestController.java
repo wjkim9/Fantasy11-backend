@@ -1,7 +1,6 @@
 package likelion.mlb.backendProject.domain.match.controller;
 
 import likelion.mlb.backendProject.domain.match.dto.MatchStatusResponse;
-import likelion.mlb.backendProject.domain.match.dto.MatchUuidResponse;
 import likelion.mlb.backendProject.domain.match.service.MatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +19,5 @@ public class MatchRestController {
     public ResponseEntity<MatchStatusResponse> getStatus() {
         return ResponseEntity.ok(matchService.getCurrentStatus());
     }
-
-    @GetMapping("/uuid")
-    public ResponseEntity<MatchUuidResponse> generateUserId() {
-        return ResponseEntity.ok(matchService.generateUserId());
-    }
-
 
 }

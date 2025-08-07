@@ -1,8 +1,6 @@
 package likelion.mlb.backendProject.domain.match.service;
 
-import likelion.mlb.backendProject.domain.match.dto.DraftWindow;
 import likelion.mlb.backendProject.domain.match.dto.MatchStatusResponse;
-import likelion.mlb.backendProject.domain.match.dto.MatchUuidResponse;
 import likelion.mlb.backendProject.domain.match.dto.RoundInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,43 +22,29 @@ public class MatchService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     public MatchStatusResponse getCurrentStatus() {
-        Long count = redisTemplate.opsForSet().size(SESSION_KEY);
-        long userCount = count == null ? 0 : count;
+        long userCount = Optional.ofNullable(redisTemplate.opsForSet().size(SESSION_KEY)).orElse(0L);
 
-        DraftWindow draftWindow = draftTimingService.getNextDraftWindowOrThrow();
+        RoundInfo round = draftTimingService.getNextDraftWindowOrThrow();
         LocalDateTime now = LocalDateTime.now(KST);
+
+        LocalDateTime openAt = LocalDateTime.parse(round.getOpenAt());
+        LocalDateTime lockAt = LocalDateTime.parse(round.getLockAt());
 
         String state;
         String remaining;
 
-        if (now.isBefore(draftWindow.getOpenAt())) {
+        if (now.isBefore(openAt)) {
             state = "BEFORE_OPEN";
-            remaining = formatRemaining(now, draftWindow.getOpenAt());
-        } else if (!now.isAfter(draftWindow.getLockAt())) {
+            remaining = formatRemaining(now, openAt);
+        } else if (!now.isAfter(lockAt)) {
             state = "OPEN";
-            remaining = formatRemaining(now, draftWindow.getLockAt());
+            remaining = formatRemaining(now, lockAt);
         } else {
             state = "LOCKED";
             remaining = "00:00";
         }
 
-        return new MatchStatusResponse(
-                userCount,
-                state,
-                remaining,
-                new RoundInfo(
-                        draftWindow.getRoundId(),
-                        draftWindow.getRoundNo(),
-                        draftWindow.getOpenAt().toString(),
-                        draftWindow.getLockAt().toString()
-                )
-        );
-    }
-
-    public MatchUuidResponse generateUserId() {
-        String uuid = UUID.randomUUID().toString();
-        Long count = redisTemplate.opsForSet().size(SESSION_KEY);
-        return new MatchUuidResponse(uuid, count == null ? 0 : count);
+        return new MatchStatusResponse(userCount, state, remaining, round);
     }
 
     private String formatRemaining(LocalDateTime now, LocalDateTime target) {
