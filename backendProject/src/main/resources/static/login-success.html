@@ -1,0 +1,45 @@
+<!-- src/main/resources/static/login-success.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인 성공</title>
+</head>
+<body>
+<h1>✅ 로그인 성공!</h1>
+
+<div>
+  <p><strong>Access Token:</strong></p>
+  <pre id="accessToken">불러오는 중...</pre>
+
+  <p><strong>Refresh Token:</strong></p>
+  <pre id="refreshToken">불러오는 중...</pre>
+</div>
+
+<button onclick="logout()">로그아웃</button>
+
+<script>
+  // ✅ 세션에서 토큰 가져오기
+  fetch('/api/session-tokens')
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("accessToken").textContent = data.accessToken || "없음";
+    document.getElementById("refreshToken").textContent = data.refreshToken || "없음";
+  })
+  .catch(() => {
+    document.getElementById("accessToken").textContent = "불러오기 실패";
+    document.getElementById("refreshToken").textContent = "불러오기 실패";
+  });
+
+  // ✅ 로그아웃 버튼 누르면 백엔드 로그아웃 API 호출
+  function logout() {
+    fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include' // 세션 유지용
+    }).then(() => {
+      window.location.href = "/login.html";
+    });
+  }
+</script>
+</body>
+</html>
