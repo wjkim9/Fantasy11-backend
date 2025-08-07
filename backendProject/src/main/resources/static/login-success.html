@@ -1,0 +1,43 @@
+<!-- src/main/resources/static/login-success.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인 성공</title>
+</head>
+<body>
+<h1>✅ 로그인 성공</h1>
+
+<p><strong>Access Token:</strong></p>
+<textarea id="accessToken" rows="5" cols="100" readonly></textarea>
+
+<p><strong>Refresh Token:</strong></p>
+<textarea id="refreshToken" rows="5" cols="100" readonly></textarea>
+
+<button onclick="logout()">로그아웃</button>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  document.getElementById("accessToken").value = params.get("accessToken") || "없음";
+  document.getElementById("refreshToken").value = params.get("refreshToken") || "없음";
+
+  async function logout() {
+    const accessToken = document.getElementById("accessToken").value;
+
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + accessToken
+      }
+    });
+
+    if (res.ok) {
+      alert("로그아웃 완료!");
+      window.location.href = "/login.html";
+    } else {
+      alert("로그아웃 실패");
+    }
+  }
+</script>
+</body>
+</html>

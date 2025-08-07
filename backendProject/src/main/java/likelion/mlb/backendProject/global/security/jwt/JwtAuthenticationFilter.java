@@ -1,5 +1,7 @@
 package likelion.mlb.backendProject.global.security.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,9 +10,9 @@ import java.io.IOException;
 import java.util.List;
 import likelion.mlb.backendProject.domain.user.entity.User;
 import likelion.mlb.backendProject.domain.user.repository.UserRepository;
+import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -28,15 +30,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       FilterChain chain)
       throws ServletException, IOException {
 
-    String token = resolve(request);
-    if (token != null && jwtTokenProvider.validate(token)) {
-      String email = jwtTokenProvider.getEmail(token);
-      User user = userRepository.findByEmail(email).orElseThrow();
+    try {
+      String token = resolve(request);
+      if (token != null && jwtTokenProvider.validateToken(token)) {
+        String email = jwtTokenProvider.getEmail(token);
+        User user = userRepository.findByEmail(email).orElseThrow();
 
-      UsernamePasswordAuthenticationToken authentication =
-          new UsernamePasswordAuthenticationToken(user, null,
-              List.of(new SimpleGrantedAuthority("ROLE_USER")));
-      SecurityContextHolder.getContext().setAuthentication(authentication);
+        CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+        UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+      }
+
+      chain.doFilter(request, response);
+    } catch (ExpiredJwtException e) {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.setContentType("application/json");
+      response.getWriter().write("{\"error\": \"Access Token 만료됨\"}");
+    } catch (JwtException | IllegalArgumentException e) {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.setContentType("application/json");
+      response.getWriter().write("{\"error\": \"잘못된 Access Token\"}");
     }
 
     chain.doFilter(request, response);

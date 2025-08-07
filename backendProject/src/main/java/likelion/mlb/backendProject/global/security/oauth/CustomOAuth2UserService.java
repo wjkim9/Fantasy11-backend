@@ -1,4 +1,4 @@
-package likelion.mlb.backendProject.domain.user.service;
+package likelion.mlb.backendProject.global.security.oauth;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,24 +24,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
         OAuth2User user = new DefaultOAuth2UserService().loadUser(request);
 
-        System.out.println("🔥 OAuth2 User Attributes: " + user.getAttributes());
-
         String email = user.getAttribute("email");
         if (email == null) {
             throw new OAuth2AuthenticationException("Google 응답에 email 없음");
         }
 
         String name = user.getAttribute("name") != null ? user.getAttribute("name") : "unnamed";
-        String picture = user.getAttribute("picture");
 
         User saved = userRepository.findByEmail(email).orElseGet(() ->
             userRepository.save(User.builder()
                 .id(UUID.randomUUID())
                 .email(email)
                 .name(name)
-                .profileImage(picture)
-                .provider("google")
-                .role("USER")
                 .build())
         );
 

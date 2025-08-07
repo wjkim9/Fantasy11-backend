@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.user.entity;
 
 import jakarta.persistence.*;
+import likelion.mlb.backendProject.global.staticdata.UserRole;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,33 +17,29 @@ import java.util.UUID;
 @NoArgsConstructor
 public class User {
 
-    @Id
-    @Column(name = "id", nullable = false)
-    private UUID id;
+  @Id
+  @Column(name = "id", nullable = false)
+  private UUID id;
 
-    @Column(name = "email", nullable = false)
-    private String email;
+  @Column(name = "email", nullable = false)
+  private String email;
 
-    @Column(name = "name")
-    private String name;
+  @Column(name = "name", nullable = false)
+  private String name;
 
-    @Column(name = "provider")  // ex: "google"
-    private String provider; // google
+  @Enumerated(EnumType.STRING)
+  @Column(name = "role")
+  private UserRole role = UserRole.USER;
 
-    @Column(name = "role")
-    private String role = "USER";
+  @Column(name = "created_at", nullable = false)
+  private LocalDateTime createdAt;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+  @Builder
+  public User(UUID id, String email, String name) {
+    this.id = id;
+    this.email = email;
+    this.name = name;
+    this.createdAt = LocalDateTime.now();
+  }
 
-    @Builder
-    public User(UUID id, String email, String name, String profileImage, String provider, String role) {
-        this.id = id;
-        this.email = email;
-        this.name = name;
-        this.provider = provider;
-        this.role = role;
-        this.createdAt = LocalDateTime.now();
-    }
-    
 }
