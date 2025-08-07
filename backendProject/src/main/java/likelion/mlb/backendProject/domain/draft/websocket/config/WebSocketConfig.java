@@ -8,8 +8,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-@Configuration
-@EnableWebSocketMessageBroker // Stomp 메시지 브로커 기능을 활성화하는 어노테이션
+//@Configuration
+//@EnableWebSocketMessageBroker // Stomp 메시지 브로커 기능을 활성화하는 어노테이션
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     /*

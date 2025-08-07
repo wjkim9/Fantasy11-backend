@@ -60,7 +60,7 @@ public class DraftController {
 
         try {
             // DB에 메시지 저장
-//            saveDraft(draftRequest);
+            saveDraft(draftRequest);
         } catch (RuntimeException e) {
             log.error(" 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
 
