@@ -3,6 +3,7 @@ package likelion.mlb.backendProject.domain.draft.entity;
 import jakarta.persistence.*;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.global.staticdata.entity.Player;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,11 +13,13 @@ import java.util.UUID;
 @Table(name = "participant_player")
 @Getter
 @Setter
+@Builder
 public class ParticipantPlayer {
 
     @Id
-    @Column(name = "id", nullable = false)
-    private UUID id;
+    @Builder.Default
+    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
+    private UUID id = UUID.randomUUID(); // save시 UUID값 자동 생성
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "participant_id", nullable = false)

@@ -52,8 +52,8 @@ dependencies {
 	//implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 	/* ElasticSearch */
-	//implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
-	//implementation 'co.elastic.clients:elasticsearch-java:8.13.0'
+	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+	implementation 'co.elastic.clients:elasticsearch-java:8.13.0'
 
 	/* WebSocket */
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
