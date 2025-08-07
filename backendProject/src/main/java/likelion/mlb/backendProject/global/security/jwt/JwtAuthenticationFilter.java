@@ -34,7 +34,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String token = resolve(request);
       if (token != null && jwtTokenProvider.validateToken(token)) {
         String email = jwtTokenProvider.getEmail(token);
-        User user = userRepository.findByEmail(email).orElseThrow();
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new JwtException("사용자를 찾을 수 없습니다"));
 
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
@@ -44,15 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
       }
 
-      chain.doFilter(request, response);
     } catch (ExpiredJwtException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       response.setContentType("application/json; charset=UTF-8");
       response.getWriter().write("{\"error\": \"Access Token 만료됨\"}");
+      return;
     } catch (JwtException | IllegalArgumentException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       response.setContentType("application/json; charset=UTF-8");
       response.getWriter().write("{\"error\": \"잘못된 Access Token\"}");
+      return;
     }
 
     chain.doFilter(request, response);

@@ -24,7 +24,7 @@ public class OAuth2FailureHandler implements AuthenticationFailureHandler {
 
     Map<String, String> error = Map.of(
         "error", "로그인 실패",
-        "message", exception.getMessage()
+        "message", "인증에 실패했습니다."
     );
 
     new ObjectMapper().writeValue(response.getWriter(), error);

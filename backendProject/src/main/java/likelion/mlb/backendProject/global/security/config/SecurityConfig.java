@@ -5,6 +5,7 @@ import likelion.mlb.backendProject.global.security.jwt.JwtAuthenticationFilter;
 import likelion.mlb.backendProject.global.security.oauth.OAuth2FailureHandler;
 import likelion.mlb.backendProject.global.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +32,9 @@ public class SecurityConfig {
         .formLogin(form -> form.disable())
         .httpBasic(basic -> basic.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/reissue").permitAll() // reissue 허용
+            .requestMatchers("/api/auth/reissue").permitAll()
+            .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+            .requestMatchers("/login.html", "/login-success.html").permitAll()
             .anyRequest().authenticated()
         )
         .oauth2Login(oauth2 -> oauth2
