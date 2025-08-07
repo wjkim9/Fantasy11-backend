@@ -47,11 +47,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       chain.doFilter(request, response);
     } catch (ExpiredJwtException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.setContentType("application/json");
+      response.setContentType("application/json; charset=UTF-8");
       response.getWriter().write("{\"error\": \"Access Token 만료됨\"}");
     } catch (JwtException | IllegalArgumentException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.setContentType("application/json");
+      response.setContentType("application/json; charset=UTF-8");
       response.getWriter().write("{\"error\": \"잘못된 Access Token\"}");
     }
 

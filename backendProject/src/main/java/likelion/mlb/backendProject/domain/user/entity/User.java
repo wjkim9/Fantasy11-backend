@@ -18,6 +18,7 @@ import java.util.UUID;
 public class User {
 
   @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
   @Column(name = "id", nullable = false)
   private UUID id;
 
@@ -35,10 +36,11 @@ public class User {
   private LocalDateTime createdAt;
 
   @Builder
-  public User(UUID id, String email, String name) {
+  public User(UUID id, String email, String name, UserRole role) {
     this.id = id;
     this.email = email;
     this.name = name;
+    this.role = role != null ? role : UserRole.USER;
     this.createdAt = LocalDateTime.now();
   }
 

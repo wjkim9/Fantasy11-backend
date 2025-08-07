@@ -15,7 +15,12 @@ public class RefreshTokenService {
 
   public void save(String userId, String refreshToken) {
     String key = "refresh:" + userId;
-    redisTemplate.opsForValue().set(key, refreshToken, REFRESH_TOKEN_EXPIRATION, TimeUnit.SECONDS);
+    try {
+      redisTemplate.opsForValue()
+          .set(key, refreshToken, REFRESH_TOKEN_EXPIRATION, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      throw new RuntimeException("리프레시 토큰 저장 실패: " + e.getMessage(), e);
+    }
   }
 
   public Optional<String> get(String userId) {

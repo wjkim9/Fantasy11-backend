@@ -36,7 +36,7 @@ public class AuthController {
 
   @PostMapping("/logout")
   public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
-    String userId = userDetails.getUser().getId().toString();
+    String userId = userDetails.getUser().getEmail();
     refreshTokenService.delete(userId);
     return ResponseEntity.ok("로그아웃 완료");
   }
