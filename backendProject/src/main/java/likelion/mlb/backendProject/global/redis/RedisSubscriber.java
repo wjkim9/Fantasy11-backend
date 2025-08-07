@@ -1,4 +1,4 @@
-package likelion.mlb.backendProject.domain.redis;
+package likelion.mlb.backendProject.global.redis;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
