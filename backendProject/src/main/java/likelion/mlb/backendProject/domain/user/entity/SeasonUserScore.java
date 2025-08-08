@@ -1,7 +1,7 @@
 package likelion.mlb.backendProject.domain.user.entity;
 
 import jakarta.persistence.*;
-import likelion.mlb.backendProject.global.staticdata.entity.Season;
+import likelion.mlb.backendProject.domain.round.entity.Season;
 import lombok.Getter;
 import lombok.Setter;
 

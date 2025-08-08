@@ -1,9 +1,9 @@
 package likelion.mlb.backendProject.domain.match.service;
 
 import likelion.mlb.backendProject.domain.match.dto.RoundInfo;
+import likelion.mlb.backendProject.domain.round.entity.Round;
+import likelion.mlb.backendProject.domain.round.repository.RoundRepository;
 import likelion.mlb.backendProject.global.exception.BaseException;
-import likelion.mlb.backendProject.global.staticdata.entity.Round;
-import likelion.mlb.backendProject.global.staticdata.repository.RoundRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
