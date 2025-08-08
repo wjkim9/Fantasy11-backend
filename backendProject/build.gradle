@@ -49,7 +49,7 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0"
 
 	/* Redis-Cache */
-	//implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 	/* ElasticSearch */
 	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
@@ -64,14 +64,11 @@ dependencies {
 	// WebClient
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-
-
 	/* env 파일 관련 */
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
 	/* Google Oauth */
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-
 
 	/* jwt */
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

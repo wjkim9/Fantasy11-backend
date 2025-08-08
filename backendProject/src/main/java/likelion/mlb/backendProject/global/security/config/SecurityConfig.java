@@ -35,6 +35,7 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/reissue").permitAll()
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
             .requestMatchers("/login.html", "/login-success.html").permitAll()
+            .requestMatchers("/ws/**").permitAll()  // ✅ WebSocket 경로 허용
             .anyRequest().authenticated()
         )
         .oauth2Login(oauth2 -> oauth2

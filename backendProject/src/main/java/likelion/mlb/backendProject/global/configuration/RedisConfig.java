@@ -1,5 +1,6 @@
-package likelion.mlb.backendProject.global.redis;
+package likelion.mlb.backendProject.global.configuration;
 
+import likelion.mlb.backendProject.global.redis.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
