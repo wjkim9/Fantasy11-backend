@@ -8,8 +8,8 @@ import likelion.mlb.backendProject.domain.draft.repository.ParticipantPlayerRepo
 import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.domain.match.repository.ParticipantRepository;
 import likelion.mlb.backendProject.global.redis.RedisPublisher;
-import likelion.mlb.backendProject.global.staticdata.entity.Player;
-import likelion.mlb.backendProject.global.staticdata.repository.PlayerRepository;
+import likelion.mlb.backendProject.domain.player.entity.Player;
+import likelion.mlb.backendProject.domain.player.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;

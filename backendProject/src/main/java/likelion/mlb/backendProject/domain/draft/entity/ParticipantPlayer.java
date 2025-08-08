@@ -2,7 +2,7 @@ package likelion.mlb.backendProject.domain.draft.entity;
 
 import jakarta.persistence.*;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
-import likelion.mlb.backendProject.global.staticdata.entity.Player;
+import likelion.mlb.backendProject.domain.player.entity.Player;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

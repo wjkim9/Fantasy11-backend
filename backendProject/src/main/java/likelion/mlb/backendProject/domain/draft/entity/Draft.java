@@ -1,7 +1,7 @@
 package likelion.mlb.backendProject.domain.draft.entity;
 
 import jakarta.persistence.*;
-import likelion.mlb.backendProject.global.staticdata.entity.Round;
+import likelion.mlb.backendProject.domain.round.entity.Round;
 import lombok.*;
 
 import java.util.UUID;
