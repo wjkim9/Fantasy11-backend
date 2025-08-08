@@ -9,7 +9,7 @@ import lombok.Setter;
 public class FplEvent {
 
     @JsonProperty("id")
-    private short fplId;
+    private Integer fplId;
     // ex) Gameweek 1
     private String name;
 

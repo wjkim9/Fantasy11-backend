@@ -1,7 +1,7 @@
 package likelion.mlb.backendProject.global.security.oauth;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import likelion.mlb.backendProject.domain.user.entity.User;
 import likelion.mlb.backendProject.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +31,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         String name = user.getAttribute("name") != null ? user.getAttribute("name") : "unnamed";
 
-        User saved = userRepository.findByEmail(email).orElseGet(() ->
-            userRepository.save(User.builder()
-                .id(UUID.randomUUID())
+        User saved;
+
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isPresent()) {
+            saved = optionalUser.get();
+        } else {
+            User newUser = User.builder()
                 .email(email)
                 .name(name)
-                .build())
-        );
+                .build();
+            saved = userRepository.save(newUser);
+        }
 
         return new DefaultOAuth2User(
             List.of(new SimpleGrantedAuthority("ROLE_" + saved.getRole())),

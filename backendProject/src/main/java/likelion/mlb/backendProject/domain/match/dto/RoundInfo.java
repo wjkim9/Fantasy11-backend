@@ -9,7 +9,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RoundInfo {
     private UUID id;
-    private short no;
+    private Integer no;
     private String openAt;
     private String lockAt;
 }

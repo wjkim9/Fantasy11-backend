@@ -63,7 +63,7 @@ public class Fixture {
 
     public static List<Fixture> fixtureBuilder(List<FplFixture> fplFixtures,
                                                Map<Integer, Team> teamMap,
-                                               Map<Short, Round> roundMap) {
+                                               Map<Integer, Round> roundMap) {
         List<Fixture> fixtures = new ArrayList<>();
 
         for (FplFixture fplFixture : fplFixtures) {

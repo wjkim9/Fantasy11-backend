@@ -24,7 +24,7 @@ public class Round {
     private UUID id;
 
     @Column(name ="round", nullable = false)
-    private short round;
+    private Integer round;
 
     // ex) Gameweek 1
     @Column(nullable = false)
