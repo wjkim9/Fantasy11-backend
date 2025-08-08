@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.domain.chat.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import likelion.mlb.backendProject.domain.chat.dto.ChatMessageDto;
 import likelion.mlb.backendProject.domain.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
