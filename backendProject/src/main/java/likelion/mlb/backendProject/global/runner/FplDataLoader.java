@@ -54,7 +54,7 @@ public class FplDataLoader implements ApplicationRunner {
 
 
         //fixture에 매핑을 하기 위해 뽑아야 함
-        Map<Short, Round> roundMap = savedRounds.stream()
+        Map<Integer, Round> roundMap = savedRounds.stream()
                 .collect(Collectors.toMap(Round::getRound, Function.identity()));
         //player에 매핑을 하기 위해 뽑아야 함
         Map<Integer, ElementType> typeMap = savedTypes.stream()
