@@ -1,11 +1,10 @@
 package likelion.mlb.backendProject.global.security.oauth;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
-
 import likelion.mlb.backendProject.domain.user.service.RefreshTokenService;
 import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -34,22 +33,16 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     refreshTokenService.save(userId, refreshToken);
 
-    /* ✅ [임시: HTML 테스트용] 토큰을 세션에 저장 */
-    request.getSession().setAttribute("accessToken", accessToken);
-    request.getSession().setAttribute("refreshToken", refreshToken);
+    // 리프레시 토큰을 httpOnly 쿠키에 저장
+    Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setSecure(request.isSecure()); // HTTPS 환경에서만 쿠키 전송
+    refreshTokenCookie.setPath("/");
+    refreshTokenCookie.setMaxAge(60 * 60 * 24 * 14); // 2주
+    response.addCookie(refreshTokenCookie);
 
-    response.sendRedirect("/login-success.html");
-
-    /* ✅ [후에 React 연동 시 사용할 JSON 응답 코드]
-    response.setContentType("application/json");
-    response.setCharacterEncoding("UTF-8");
-
-    Map<String, String> tokens = Map.of(
-        "accessToken", accessToken,
-        "refreshToken", refreshToken
-    );
-
-    new ObjectMapper().writeValue(response.getWriter(), tokens);
-    */
+    // 액세스 토큰은 URL 파라미터로 전달
+    String targetUrl = "http://localhost:5173/auth/callback?accessToken=" + accessToken;
+    response.sendRedirect(targetUrl);
   }
 }
