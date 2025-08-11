@@ -6,6 +6,10 @@ import java.util.UUID;
 import likelion.mlb.backendProject.domain.chat.repository.ChatRoomRepository;
 import likelion.mlb.backendProject.domain.draft.handler.CustomHandshakeHandler;
 import likelion.mlb.backendProject.domain.match.repository.ParticipantRepository;
+import likelion.mlb.backendProject.domain.user.entity.User;
+import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
+import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
+import likelion.mlb.backendProject.domain.user.repository.UserRepository;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -17,6 +21,8 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.util.StringUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -26,6 +32,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, ApplicationContextAware {
 
   private ApplicationContext applicationContext;
+  private final JwtTokenProvider jwtTokenProvider;
+  private final UserRepository userRepository;
+
+  public WebSocketConfig(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
+      this.jwtTokenProvider = jwtTokenProvider;
+      this.userRepository = userRepository;
+  }
 
   @Override
   public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -46,7 +59,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, Applic
 
     registry.addEndpoint("/api/ws-draft")
         .setHandshakeHandler(new CustomHandshakeHandler())
-        .setAllowedOriginPatterns("*");
+        .setAllowedOriginPatterns("* ");
   }
 
   @Override
@@ -60,10 +73,23 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, Applic
       public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
-        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            String jwt = resolveToken(accessor);
+            if (jwt != null && jwtTokenProvider.validateToken(jwt)) {
+                String email = jwtTokenProvider.getEmail(jwt);
+                User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+                UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+                
+                accessor.setUser(authentication);
+            }
+        }
+        else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
           String dest = accessor.getDestination();
           if (dest != null && dest.matches("/topic/chat/[0-9a-fA-F\\-]{36}")) {
-            // lazy-init repository beans
             if (participantRepo == null || chatRoomRepo == null) {
               this.participantRepo = applicationContext.getBean(ParticipantRepository.class);
               this.chatRoomRepo    = applicationContext.getBean(ChatRoomRepository   .class);
@@ -95,6 +121,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, Applic
         }
 
         return message;
+      }
+      
+      private String resolveToken(StompHeaderAccessor accessor) {
+          String bearerToken = accessor.getFirstNativeHeader("Authorization");
+          if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+              return bearerToken.substring(7);
+          }
+          return null;
       }
     });
   }
