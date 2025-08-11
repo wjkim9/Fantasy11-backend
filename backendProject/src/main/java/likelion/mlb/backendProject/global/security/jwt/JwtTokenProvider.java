@@ -5,6 +5,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
@@ -18,22 +20,27 @@ public class JwtTokenProvider {
   @Value("${jwt.secret}")
   private String secretKey;
 
+  private Key key;
+
   private static final long ACCESS_TOKEN_VALID_TIME = 60 * 60 * 1000L; // 1시간
   private static final long REFRESH_TOKEN_VALID_TIME = 60 * 60 * 24 * 14 * 1000L; // 14일
 
-  private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+  @PostConstruct
+  protected void init() {
+    this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+  }
 
-  public String createAccessToken(String userId) {
+  public String createAccessToken(String email) {
     return Jwts.builder()
-        .setSubject(userId)
+        .setSubject(email)
         .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALID_TIME))
         .signWith(key, SignatureAlgorithm.HS256)
         .compact();
   }
 
-  public String createRefreshToken(String userId) {
+  public String createRefreshToken(String email) {
     return Jwts.builder()
-        .setSubject(userId)
+        .setSubject(email)
         .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALID_TIME))
         .signWith(key, SignatureAlgorithm.HS256)
         .compact();
