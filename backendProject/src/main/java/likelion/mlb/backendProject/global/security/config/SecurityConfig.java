@@ -36,14 +36,14 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
+            .requestMatchers("/api/**", "/oauth2/**", "/login.html").permitAll()
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
             .requestMatchers("/ws/**").permitAll()
             .requestMatchers(
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()
-            .requestMatchers("/api/**").authenticated()
+            //.requestMatchers("/api/**").authenticated()
             .anyRequest().permitAll()
         )
         .oauth2Login(oauth2 -> oauth2
