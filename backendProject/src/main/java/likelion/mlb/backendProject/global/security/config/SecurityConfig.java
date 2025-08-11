@@ -1,7 +1,7 @@
 package likelion.mlb.backendProject.global.security.config;
 
-import likelion.mlb.backendProject.global.security.oauth.CustomOAuth2UserService;
 import likelion.mlb.backendProject.global.security.jwt.JwtAuthenticationFilter;
+import likelion.mlb.backendProject.global.security.oauth.CustomOAuth2UserService;
 import likelion.mlb.backendProject.global.security.oauth.OAuth2FailureHandler;
 import likelion.mlb.backendProject.global.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -28,24 +30,32 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-        .csrf(csrf -> csrf.disable())
-        .formLogin(form -> form.disable())
-        .httpBasic(basic -> basic.disable())
+        .cors(withDefaults())
+        .csrf(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/reissue").permitAll()
+            .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
             .requestMatchers("/login.html", "/login-success.html").permitAll()
             .requestMatchers("/ws/**").permitAll()  // ✅ WebSocket 경로 허용
             .requestMatchers("/**").permitAll()
+            .requestMatchers("/ws/**").permitAll()
+            .requestMatchers(
+                "/swagger-ui/**",
+                "/v3/api-docs/**"
+            ).permitAll()
+            .requestMatchers("/api/**").authenticated()
             .anyRequest().permitAll()
         )
         .oauth2Login(oauth2 -> oauth2
             .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
             .successHandler(oAuth2SuccessHandler)
             .failureHandler(oAuth2FailureHandler)
-        );
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-    http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
 }

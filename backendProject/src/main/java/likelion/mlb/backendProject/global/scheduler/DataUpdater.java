@@ -46,7 +46,7 @@ public class DataUpdater {
     private final ElementTypeRepository elementTypeRepository;
 
     //매일 오전 8시에 실행
-    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Seoul")
     @Transactional
     @SchedulerLog(action = "dailyScheduling")
     public void fullRefresh() {
