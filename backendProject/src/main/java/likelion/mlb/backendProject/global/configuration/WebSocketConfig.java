@@ -1,16 +1,9 @@
 package likelion.mlb.backendProject.global.configuration;
 
-import java.nio.file.AccessDeniedException;
-import java.security.Principal;
-import java.util.UUID;
 import likelion.mlb.backendProject.domain.chat.repository.ChatRoomRepository;
-import likelion.mlb.backendProject.domain.draft.handler.CustomHandshakeHandler;
 import likelion.mlb.backendProject.domain.match.repository.ParticipantRepository;
-import likelion.mlb.backendProject.domain.user.entity.User;
-import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
 import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
 import likelion.mlb.backendProject.domain.user.repository.UserRepository;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +14,6 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.util.StringUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -32,23 +23,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, ApplicationContextAware {
 
   private ApplicationContext applicationContext;
-  private final JwtTokenProvider jwtTokenProvider;
-  private final UserRepository userRepository;
-
-  public WebSocketConfig(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
-      this.jwtTokenProvider = jwtTokenProvider;
-      this.userRepository = userRepository;
-  }
 
   @Override
-  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+  public void setApplicationContext(ApplicationContext applicationContext) {
     this.applicationContext = applicationContext;
   }
 
   @Override
   public void configureMessageBroker(MessageBrokerRegistry config) {
     config.enableSimpleBroker("/topic");
-    config.setApplicationDestinationPrefixes("/app", "/api");
+    config.setApplicationDestinationPrefixes("/app"); // STOMP는 /app 하나로 통일 권장
   }
 
   @Override
@@ -57,79 +41,127 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, Applic
         .setAllowedOriginPatterns("*")
         .withSockJS();
 
+
     registry.addEndpoint("/api/ws-draft")
-        .setHandshakeHandler(new CustomHandshakeHandler())
-        .setAllowedOriginPatterns("* ");
+        .setAllowedOriginPatterns("*");
   }
 
   @Override
   public void configureClientInboundChannel(ChannelRegistration registration) {
     registration.interceptors(new ChannelInterceptor() {
 
+      // lazy bean refs
       private ParticipantRepository participantRepo;
       private ChatRoomRepository chatRoomRepo;
+      private JwtTokenProvider jwtTokenProvider;
+      private UserRepository userRepository;
+      private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+      private void ensureBeans() {
+        if (participantRepo == null) {
+          participantRepo   = applicationContext.getBean(ParticipantRepository.class);
+          chatRoomRepo      = applicationContext.getBean(ChatRoomRepository.class);
+          jwtTokenProvider  = applicationContext.getBean(JwtTokenProvider.class);
+          userRepository    = applicationContext.getBean(UserRepository.class);
+          objectMapper      = applicationContext.getBean(com.fasterxml.jackson.databind.ObjectMapper.class);
+        }
+      }
 
       @Override
       public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        ensureBeans();
+        var accessor = StompHeaderAccessor.wrap(message);
+        if (accessor == null) return message;
+
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            String jwt = resolveToken(accessor);
-            if (jwt != null && jwtTokenProvider.validateToken(jwt)) {
-                String email = jwtTokenProvider.getEmail(jwt);
-                User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-                CustomUserDetails customUserDetails = new CustomUserDetails(user);
+          String raw = accessor.getFirstNativeHeader("Authorization"); // "Bearer xxx"
+          if (raw != null && raw.startsWith("Bearer ")) raw = raw.substring(7);
 
-                UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
-                
-                accessor.setUser(authentication);
-            }
+          if (raw != null && jwtTokenProvider.validateToken(raw)) {
+            String email = jwtTokenProvider.getEmail(raw); // 팀원과 합의대로 subject=email
+            var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("user not found: " + email));
+
+            var cud  = new likelion.mlb.backendProject.global.security.dto.CustomUserDetails(user);
+            var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                cud, null, cud.getAuthorities()
+            );
+
+            accessor.setUser(auth);
+          }
         }
-        else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+
+        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
           String dest = accessor.getDestination();
-          if (dest != null && dest.matches("/topic/chat/[0-9a-fA-F\\-]{36}")) {
-            if (participantRepo == null || chatRoomRepo == null) {
-              this.participantRepo = applicationContext.getBean(ParticipantRepository.class);
-              this.chatRoomRepo    = applicationContext.getBean(ChatRoomRepository   .class);
-            }
+          if (dest != null && dest.matches("^/topic/chat/[0-9a-fA-F\\-]{36}(/presence)?$")) {
 
-            UUID roomId = UUID.fromString(dest.substring("/topic/chat/".length()));
-            Principal user = accessor.getUser();
-            UUID draftId = null;
-            try {
-              draftId = chatRoomRepo.findById(roomId)
-                  .orElseThrow(() -> new AccessDeniedException("존재하지 않는 방입니다."))
-                  .getDraft().getId();
-            } catch (AccessDeniedException e) {
-              throw new RuntimeException(e);
-            }
+            var auth = (org.springframework.security.core.Authentication) accessor.getUser();
+            if (auth == null) throw new RuntimeException(new java.nio.file.AccessDeniedException("Unauthenticated"));
 
-            boolean allowed = participantRepo
-                .existsByDraft_IdAndUser_Id(
-                    draftId,
-                    UUID.fromString(user.getName())
-                );
+            var cud    = (likelion.mlb.backendProject.global.security.dto.CustomUserDetails) auth.getPrincipal();
+            var userId = cud.getUser().getId();
 
+            String idPart = dest.substring("/topic/chat/".length());
+            if (idPart.endsWith("/presence")) idPart = idPart.substring(0, idPart.length() - "/presence".length());
+            var roomId = java.util.UUID.fromString(idPart);
+
+            var draftId = chatRoomRepo.findById(roomId)
+                .orElseThrow(() -> new RuntimeException(new java.nio.file.AccessDeniedException("존재하지 않는 방입니다.")))
+                .getDraft().getId();
+
+            boolean allowed = participantRepo.existsByDraft_IdAndUser_Id(draftId, userId);
             if (!allowed) {
-              throw new RuntimeException(
-                  new AccessDeniedException("이 방을 구독할 권한이 없습니다.")
-              );
+              throw new RuntimeException(new java.nio.file.AccessDeniedException("이 방을 구독할 권한이 없습니다."));
             }
           }
         }
+
+
+        if (StompCommand.SEND.equals(accessor.getCommand())) {
+          String dest = accessor.getDestination();
+          if ("/app/chat.send".equals(dest)) {
+            var auth = (org.springframework.security.core.Authentication) accessor.getUser();
+            if (auth == null) throw new RuntimeException(new java.nio.file.AccessDeniedException("Unauthenticated"));
+
+            var cud    = (likelion.mlb.backendProject.global.security.dto.CustomUserDetails) auth.getPrincipal();
+            var userId = cud.getUser().getId();
+
+            java.util.UUID roomId = null;
+
+            String headerRoomId = accessor.getFirstNativeHeader("X-ROOM-ID");
+            if (headerRoomId != null) {
+              roomId = java.util.UUID.fromString(headerRoomId);
+            } else {
+              Object payload = message.getPayload();
+              if (payload instanceof byte[] body) {
+                try {
+                  var node = objectMapper.readTree(body);
+                  var rid  = node.hasNonNull("roomId") ? node.get("roomId").asText(null) : null;
+                  if (rid != null) roomId = java.util.UUID.fromString(rid);
+                } catch (Exception ignore) { /* payload 파싱 실패 시 아래에서 에러 */ }
+              }
+            }
+
+            if (roomId == null) {
+              throw new RuntimeException(new java.nio.file.AccessDeniedException("roomId header/body required"));
+            }
+
+            var draftId = chatRoomRepo.findById(roomId)
+                .orElseThrow(() -> new RuntimeException(new java.nio.file.AccessDeniedException("존재하지 않는 방입니다.")))
+                .getDraft().getId();
+
+            boolean allowed = participantRepo.existsByDraft_IdAndUser_Id(draftId, userId);
+            if (!allowed) {
+              throw new RuntimeException(new java.nio.file.AccessDeniedException("이 방에 전송 권한이 없습니다."));
+            }
+          }
+        }
+
 
         return message;
-      }
-      
-      private String resolveToken(StompHeaderAccessor accessor) {
-          String bearerToken = accessor.getFirstNativeHeader("Authorization");
-          if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-              return bearerToken.substring(7);
-          }
-          return null;
       }
     });
   }
 }
+
