@@ -30,6 +30,7 @@ public enum ErrorCode {
 
   /* 409 - CONFLICT */
   ASSIGNMENT_CONFLICT(HttpStatus.CONFLICT, "ASSIGNMENT_CONFLICT", "중복 배정이 감지되었습니다."),
+  CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHATROOM_NOT_FOUND", "채팅방을 찾을 수 없습니다."),
 
   /* 500 - Internal Server Error */
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버에 오류가 발생했습니다.");

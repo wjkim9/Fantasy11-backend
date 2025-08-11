@@ -33,9 +33,8 @@ public class ChatServiceImpl implements ChatService {
   private final KafkaTemplate<String, ChatMessageEvent> kafkaTemplate;
 
 
-
+  @Override
   public void sendMessage(ChatMessageDto dto) {
-    //어떤 방에다가 넣어줄지
     ChatRoom room = roomRepo.findById(dto.getRoomId())
         .orElseThrow(() -> new BaseException(ErrorCode.INVALID_INPUT_VALUE));
 
@@ -45,35 +44,26 @@ public class ChatServiceImpl implements ChatService {
     msg.setContent(dto.getContent());
     msg.setMessageType(dto.getMessageType());
     msg.setCreatedAt(LocalDateTime.now());
-    //유저
+
     if (dto.getUserId() != null) {
       User user = userRepo.findById(dto.getUserId())
           .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+      msg.setUser(user);
     }
+
     messageRepo.save(msg);
 
     ChatMessageEvent evt = ChatMessageEvent.fromDto(
         msg.getId(),
         room.getId(),
-        dto.getUserId(),
-        dto.getContent(),
-        dto.getMessageType().name(),
+        msg.getUser() != null ? msg.getUser().getId() : null,
+        msg.getContent(),
+        msg.getMessageType().name(),
         msg.getCreatedAt()
     );
 
-    kafkaTemplate.send(
-        "chat-messages",
-        evt.getRoomId().toString(),
-        evt
-    );
+    kafkaTemplate.send("chat-messages", evt.getRoomId().toString(), evt);
 
-    template.convertAndSend("/topic/chat/" + room.getId(), dto);
-
-    dto.setId(msg.getId());
-    dto.setSentAt(msg.getCreatedAt());
-
-    String dest = "/topic/chat/" + dto.getRoomId();
-    template.convertAndSend(dest, dto);
   }
 
   @Override
@@ -82,13 +72,11 @@ public class ChatServiceImpl implements ChatService {
     roomRepo.findById(roomId)
         .orElseThrow(() -> new BaseException(ErrorCode.INVALID_INPUT_VALUE));
 
-
     List<ChatMessage> page = messageRepo.findPreviousMessages(
         roomId,
         cursorTime,
         PageRequest.of(0, size)
     );
-
 
     Collections.reverse(page);
 

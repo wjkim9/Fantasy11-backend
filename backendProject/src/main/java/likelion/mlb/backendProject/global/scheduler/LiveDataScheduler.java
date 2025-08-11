@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.global.scheduler;
 
+import likelion.mlb.backendProject.domain.chat.service.ChatNotificationService;
 import likelion.mlb.backendProject.domain.player.entity.Player;
 import likelion.mlb.backendProject.domain.player.entity.live.MatchEvent;
 import likelion.mlb.backendProject.domain.player.entity.live.PlayerFixtureStat;
@@ -40,6 +41,7 @@ public class LiveDataScheduler {
     private final PlayerRepository playerRepository;
     private final PlayerFixtureStatRepository playerFixtureStatRepository;
     private final MatchEventRepository matchEventRepository;
+    private final ChatNotificationService notificationService;
 
     @Scheduled(fixedRate = 60_000, initialDelay = 10_000, zone = "Asia/Seoul")
     @SchedulerLock(name = "pollLiveFixturesLock", lockAtMostFor = "55s")
@@ -303,8 +305,10 @@ public class LiveDataScheduler {
         // 처음 생성시 기존 골/어시스트가 있다면 이벤트로 생성
         for (int i = 0; i < element.getStats().getGoalsScored(); i++) {
             createMatchEvent(stat, "goals_scored", currentMatchMinute, (short) 4);
+
             log.info("초기 골 이벤트 생성: player={}, fixture={}, matchMinute={}, point={}",
                     stat.getPlayer().getFplId(), stat.getFixture().getFplId(), currentMatchMinute, 4);
+
         }
 
         for (int i = 0; i < element.getStats().getAssists(); i++) {
@@ -323,6 +327,9 @@ public class LiveDataScheduler {
                 .point(point)
                 .build();
 
-        matchEventRepository.save(matchEvent);
+        MatchEvent saved = matchEventRepository.save(matchEvent);
+
+        notificationService.sendMatchAlert(saved);
+
     }
 }

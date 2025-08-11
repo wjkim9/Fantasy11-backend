@@ -15,7 +15,13 @@ public class ChatController {
   private final ChatService chatService;
 
   @MessageMapping("/chat.send")
-  public void sendMessage(@Payload ChatMessageDto dto) {
+  public void sendMessage(@Payload ChatMessageDto dto, java.security.Principal principal) {
+
+    var auth = (org.springframework.security.core.Authentication) principal;
+    var cud  = (likelion.mlb.backendProject.global.security.dto.CustomUserDetails) auth.getPrincipal();
+
+    dto.setUserId(cud.getUser().getId());
+
     chatService.sendMessage(dto);
   }
 }
