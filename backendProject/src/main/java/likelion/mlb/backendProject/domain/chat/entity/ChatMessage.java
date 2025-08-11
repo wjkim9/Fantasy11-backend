@@ -2,7 +2,10 @@ package likelion.mlb.backendProject.domain.chat.entity;
 
 import jakarta.persistence.*;
 import likelion.mlb.backendProject.domain.user.entity.User;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -12,6 +15,9 @@ import java.util.UUID;
 @Table(name = "chat_message")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ChatMessage {
 
     public enum MessageType {

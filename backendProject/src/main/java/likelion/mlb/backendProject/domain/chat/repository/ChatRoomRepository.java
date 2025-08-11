@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
 
   Optional<ChatRoom> findByDraft(Draft draft);
+  Optional<ChatRoom> findByDraftId(UUID draftId);
+
 }
