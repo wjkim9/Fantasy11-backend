@@ -77,6 +77,7 @@
                 <div class="row">
                     <input type="text" id="msg" placeholder="메시지">
                     <button onclick="sendMessage()">Send</button>
+                    <button onclick="sendMessage2()">Send2</button>
                     <button class="btn-disconnect" onclick="disconnect()">Disconnect</button>
                 </div>
             </div>
@@ -190,7 +191,7 @@
                     //일반채팅
                     stompClient.subscribe(`/topic/room.a1c2d3e4-f5b6-4789-9abc-1234567890ab`, function (chat) {
                         const message = JSON.parse(chat.body);
-                        showMessage(message.from, message.message, message.messageAt);
+                        showMessage(message.elementTypePluralName, message.playerWebName, message.teamName);
                     });
 
                     //귓속말
@@ -225,7 +226,7 @@
                     //일반채팅
                     stompClient.subscribe(`/topic/room.a1c2d3e4-f5b6-4789-9abc-1234567890ab`, function (chat) {
                         const message = JSON.parse(chat.body);
-                        showMessage(message.participantId, message.playerId);
+                        showMessage(message.elementTypePluralName, message.playerWebName, message.teamName);
                     });
                 });
             }
@@ -243,30 +244,55 @@
             }
 
             function sendMessage() {
-                const msg = document.getElementById("msg").value;
-
-                const toUser = document.getElementById("whisperTo").value.trim();
-
-<!--                if (!nickname || !msg || !roomId) {-->
-<!--                    alert("모든 정보를 입력해주세요!");-->
-<!--                    return;-->
-<!--                }-->
-
+<!--                const msg = document.getElementById("msg").value;-->
+<!--                const toUser = document.getElementById("whisperTo").value.trim();-->
                 const payload = {
                     draftId: "a1c2d3e4-f5b6-4789-9abc-1234567890ab",
                     participantId: "0f1e2d3c-4b5a-6789-abcd-0987654321fe",
-                    playerId: "123e4567-e89b-12d3-a456-426614174000"
+                    playerId: "802c16d9-d540-4bf1-ae3c-7432e5dbf969",
+                    playerWebName: "Hee Chan",
+                    playerKrName: "황희찬",
+                    elementTypeId: "58930d2b-a313-40be-b824-e5e64b77a7e0",
+                    elementTypeKrName: "미드필더",
+                    elementTypePluralName: "Midfielders",
+                    teamId: "38afe2ec-7077-4fa0-8b52-4c7cb4e45092",
+                    teamName: "Wolves",
+                    teamKrName: "울버햄튼"
                 };
 
-                console.log("msg = ",msg)
+<!--                console.log("msg = ",msg)-->
 
                 stompClient.send("/api/draft/selectPlayer", {}, JSON.stringify(payload));
                 document.getElementById("msg").value = "";
             }
 
-            function showMessage(from, message, messageAt) {
+            function sendMessage2() {
+<!--                const msg = document.getElementById("msg").value;-->
+<!--                const toUser = document.getElementById("whisperTo").value.trim();-->
+                const payload = {
+                    draftId: "a1c2d3e4-f5b6-4789-9abc-1234567890ab",
+                    participantId: "9f8a6c67-5b42-4df1-8ad8-fd0aebc4b687",
+                    playerId: "ee1f57e2-60d9-48d0-a6be-e64988274c4a",
+                    playerWebName: "Cunha",
+                    playerKrName: "마테우스쿠냐",
+                    elementTypeId: "58930d2b-a313-40be-b824-e5e64b77a7e0",
+                    elementTypeKrName: "미드필더",
+                    elementTypePluralName: "Midfielders",
+                    teamId: "8a77fdb2-3e84-431d-85e0-8de3044323b5",
+                    teamName: "Man Utd",
+                    teamKrName: "맨체스터 유나이티드"
+                };
+
+<!--                console.log("msg = ",msg)-->
+
+                stompClient.send("/api/draft/selectPlayer", {}, JSON.stringify(payload));
+                document.getElementById("msg").value = "";
+            }
+
+
+            function showMessage(elementTypePluralName, playerWebName, teamName) {
                 const chatArea = document.getElementById("chatArea");
-                chatArea.innerHTML += `<div class="msgrow"><span class="from">${from}:</span> ${message} - ${messageAt}</div>`;
+                chatArea.innerHTML += `<div class="msgrow"><span class="from">${elementTypePluralName}:</span> ${playerWebName} - ${teamName}</div>`;
                 chatArea.scrollTop = chatArea.scrollHeight;
             }
             function showSysMsg(msg) {
