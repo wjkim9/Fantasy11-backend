@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -41,11 +42,17 @@ public class RedisConfig {
     RedisTemplate<String, Object> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
 
-    // 문자열 직렬화 설정 (key, value 모두)
+    /*
+    * 문자열 직렬화 설정 (key, value 모두) -> value (역)직렬화 설정은 문자열이 아닌 Object로 변경
+    * new StringRedisSerializer() -> new GenericJackson2JsonRedisSerializer()
+    * */
     template.setKeySerializer(new StringRedisSerializer());
-    template.setValueSerializer(new StringRedisSerializer());
+//    template.setValueSerializer(new StringRedisSerializer());
+	template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
     template.setHashKeySerializer(new StringRedisSerializer());
-    template.setHashValueSerializer(new StringRedisSerializer());
+//    template.setHashValueSerializer(new StringRedisSerializer());
+	template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
     return template;
   }
