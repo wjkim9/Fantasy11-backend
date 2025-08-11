@@ -5,6 +5,7 @@ import likelion.mlb.backendProject.domain.team.dto.TeamTableDto;
 import likelion.mlb.backendProject.domain.team.entity.Team;
 import likelion.mlb.backendProject.domain.team.service.TeamService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
