@@ -19,8 +19,9 @@ public class Draft {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "room_no", nullable = false)
-    private long roomNo;
+    @Column(name = "room_no", nullable = false, updatable = false, insertable = false)
+    @org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
+    private Long roomNo;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;

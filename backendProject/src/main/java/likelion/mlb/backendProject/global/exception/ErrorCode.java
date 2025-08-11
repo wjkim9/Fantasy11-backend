@@ -26,6 +26,10 @@ public enum ErrorCode {
   /* 404 - Not Found */
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
   ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "ROUND_NOT_FOUND", "시작 예정 라운드를 찾을 수 없습니다."),
+  ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "배정된 드래프트가 없습니다."),
+
+  /* 409 - CONFLICT */
+  ASSIGNMENT_CONFLICT(HttpStatus.CONFLICT, "ASSIGNMENT_CONFLICT", "중복 배정이 감지되었습니다."),
 
   /* 500 - Internal Server Error */
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버에 오류가 발생했습니다.");
