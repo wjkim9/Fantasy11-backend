@@ -18,12 +18,14 @@ public class TeamTableDto {
     private short points;
     private short played;
     private short position;
+    private String pic;
 
     public static List<TeamTableDto> toDto(List<Team> teams) {
         List<TeamTableDto> dtos = new ArrayList<>();
 
         for (Team team : teams) {
             TeamTableDto dto = new TeamTableDto();
+            dto.pic = team.getPic();
             dto.fplId = team.getFplId();
             dto.name = team.getName();
             dto.win = team.getWin();
