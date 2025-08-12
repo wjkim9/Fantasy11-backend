@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/players")
+@RequestMapping("/api/playerCache")
 @RequiredArgsConstructor
 public class PlayerCacheController {
 
@@ -22,15 +22,15 @@ public class PlayerCacheController {
 
     // DB → Redis 저장 (캐시 초기화)
     @PostMapping("/cache")
-    public ResponseEntity<String> cachePlayers() {
+    public ResponseEntity<String> cachePlayerList() {
         playerCacheService.loadPlayersToRedis();
-        return ResponseEntity.ok("Players cached to Redis with TTL.");
+        return ResponseEntity.ok("Player list cached to Redis.");
     }
 
     // Redis → 조회 (캐시 미스 시 자동 로드)
     @GetMapping
-    public ResponseEntity<List<PlayerDto>> getPlayers() {
-        List<PlayerDto> players = playerCacheService.getPlayersFromRedis();
-        return ResponseEntity.ok(players);
+    public ResponseEntity<List<PlayerDto>> getPlayerList() {
+        List<PlayerDto> playerList = playerCacheService.getPlayersFromRedis();
+        return ResponseEntity.ok(playerList);
     }
 }

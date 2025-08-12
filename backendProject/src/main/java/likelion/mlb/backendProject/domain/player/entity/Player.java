@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
+import likelion.mlb.backendProject.domain.player.cache.dto.PlayerDto;
 import likelion.mlb.backendProject.domain.team.entity.Team;
 import likelion.mlb.backendProject.global.jpa.entity.BaseTime;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplElement;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "player")
@@ -144,5 +146,27 @@ public class Player extends BaseTime {
         this.team = teamMap.get(element.getTeam());
         this.elementType = typeMap.get(element.getElementType());
     }
+
+    /**
+     * Player 엔티티 리스트 → PlayerDto 리스트 변환
+     */
+    public static List<PlayerDto> toDtoList(List<Player> players) {
+        return players.stream().map(p -> PlayerDto.builder()
+                .id(p.getId())
+                .webName(p.getWebName())
+                .krName(p.getKrName())
+                .pic(p.getPic())
+
+                // team관련 설정
+                .teamName(p.getTeam().getName())
+                .teamKrName(p.getTeam().getKrName())
+
+                // 포지션(elementType) 관련 설정
+                .elementTypePluralName(p.getElementType().getPluralName())
+                .elementTypeKrName(p.getElementType().getKrName())
+                .build()
+        ).collect(Collectors.toList());
+    }
+
 }
 
