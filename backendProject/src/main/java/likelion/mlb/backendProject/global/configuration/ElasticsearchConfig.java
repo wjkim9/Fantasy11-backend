@@ -12,17 +12,14 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 @RequiredArgsConstructor
 public class ElasticsearchConfig {
 
-
   private final ElasticsearchOperations esOps;
-
 
   @PostConstruct
   public void createChatIndex() {
-    IndexOperations ops = esOps.indexOps(IndexCoordinates.of("chat-messages"));
+    var ops = esOps.indexOps(ChatMessageDocument.class);
     if (!ops.exists()) {
-
-      ops.create();
-      ops.putMapping(ChatMessageDocument.class);
+      ops.createWithMapping();
     }
   }
 }
+
