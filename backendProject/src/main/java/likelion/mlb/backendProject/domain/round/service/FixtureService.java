@@ -16,7 +16,6 @@ public class FixtureService {
     private final FixtureRepository fixtureRepository;
 
     public List<Fixture> getFixturesOfPreviousRound() {
-        return fixtureRepository.findByRoundIsPreviousTrue()
-                .orElseThrow(() -> new RuntimeException("이전 라운드 경기가 없습니다."));
+        return fixtureRepository.findByRoundIsPreviousTrue();
     }
 }

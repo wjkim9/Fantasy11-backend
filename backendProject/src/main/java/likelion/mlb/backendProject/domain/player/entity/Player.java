@@ -111,8 +111,9 @@ public class Player extends BaseTime {
     public static Player playerBuilder(FplElement element,
                                              Map<Integer, ElementType> typeMap,
                                              Map<Integer, Team> teamMap) {
-        String picUri = "https://resources.premierleague.com/premierleague/photos/players/250x250/p"
-                + element.getCode() + ".png";
+
+        String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
+         + element.getCode() + ".png";
         return Player.builder()
                 .code(element.getCode())
                 .fplId(element.getFplId())
@@ -134,6 +135,9 @@ public class Player extends BaseTime {
     public void updatePlayer(FplElement element,
                              Map<Integer, ElementType> typeMap,
                              Map<Integer, Team> teamMap) {
+        String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
+                + element.getCode() + ".png";
+        this.pic = picUri;
         this.status = element.getStatus();
         this.fplId = element.getFplId();
         this.news = element.getNews();
