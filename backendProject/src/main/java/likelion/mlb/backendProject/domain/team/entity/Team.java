@@ -67,7 +67,7 @@ public class Team extends BaseTime {
         List<Team> ts = new ArrayList<>();
         for (FplTeam fplTeam : fplTeams) {
             Integer code = fplTeam.getCode();
-            String pic = "https://resources.premierleague.com/premierleague/badges/rb/t" + code + ".svg";
+            String pic = "https://resources.premierleague.com/premierleague25/badges-alt/" + code + ".svg";
             Team t = Team.builder()
                     .code(fplTeam.getCode())
                     .fplId(fplTeam.getFplId())
@@ -88,7 +88,7 @@ public class Team extends BaseTime {
 
     public void updateStats(FplTeam team) {
         Integer code = team.getCode();
-        String pic = "https://resources.premierleague.com/premierleague/badges/rb/t" + code + ".svg";
+        String pic = "https://resources.premierleague.com/premierleague25/badges-alt/" + code + ".svg";
         this.played = team.getPlayed();
         this.win = team.getWin();
         this.draw = team.getDraw();

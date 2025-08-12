@@ -1,0 +1,12 @@
+spring:
+  task:
+    scheduling:
+      enabled: false   # 테스트 중엔 스케줄러 자동 실행 금지
+  jpa:
+    hibernate:
+      ddl-auto: create  # 테스트에 맞춰 조정 (또는 Flyway 사용)
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  # ShedLock DB 잠금 안 쓰게 하거나, 테스트용 LockProvider로 대체
