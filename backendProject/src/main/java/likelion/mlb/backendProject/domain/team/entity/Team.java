@@ -57,6 +57,8 @@ public class Team extends BaseTime {
     @Column(name = "position", nullable = false)
     private short position = 0;
 
+    private String pic;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
@@ -64,6 +66,8 @@ public class Team extends BaseTime {
     public static List<Team> teamBuilder(List<FplTeam> fplTeams, Season season) {
         List<Team> ts = new ArrayList<>();
         for (FplTeam fplTeam : fplTeams) {
+            Integer code = fplTeam.getCode();
+            String pic = "https://resources.premierleague.com/premierleague/badges/rb/t" + code + ".svg";
             Team t = Team.builder()
                     .code(fplTeam.getCode())
                     .fplId(fplTeam.getFplId())
@@ -75,6 +79,7 @@ public class Team extends BaseTime {
                     .points(fplTeam.getPoints())
                     .position(fplTeam.getPosition())
                     .season(season)
+                    .pic(pic)
                     .build();
             ts.add(t);
         }
@@ -82,11 +87,14 @@ public class Team extends BaseTime {
     }
 
     public void updateStats(FplTeam team) {
+        Integer code = team.getCode();
+        String pic = "https://resources.premierleague.com/premierleague/badges/rb/t" + code + ".svg";
         this.played = team.getPlayed();
         this.win = team.getWin();
         this.draw = team.getDraw();
         this.lose = team.getLose();
         this.points = team.getPoints();
         this.position = team.getPosition();
+        this.pic = pic;
     }
 }

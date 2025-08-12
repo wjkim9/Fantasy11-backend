@@ -2,6 +2,7 @@ package likelion.mlb.backendProject.domain.round.repository;
 
 import likelion.mlb.backendProject.domain.round.entity.Round;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -22,6 +23,16 @@ public interface RoundRepository extends JpaRepository<Round, UUID> {
     List<Round> findAllByRoundIn(List<Integer> rounds);
 
     Round findFirstByStartedAtAfterOrderByStartedAtAsc(OffsetDateTime nowUTC);
+
+
+    @Query("""
+       select r
+         from Round r
+        where r.endedAt is not null
+          and r.finished = true
+          and r.settled = false
+    """)
+    List<Round> findUnsettledFinishedRounds();
 
 
 }

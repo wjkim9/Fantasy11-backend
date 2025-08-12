@@ -25,10 +25,10 @@ public class Participant {
     private boolean isDummy;
 
     @Column(name = "score", nullable = false)
-    private short score = 0;
+    private Integer score = 0;
 
     @Column(name = "rank")
-    private Short rank;
+    private Integer rank;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -37,4 +37,10 @@ public class Participant {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "draft_id", nullable = false)
     private Draft draft;
+
+    public void updateRank(int leaguePoint, int rank) {
+        this.score = leaguePoint;
+        this.rank = rank;
+
+    }
 }
