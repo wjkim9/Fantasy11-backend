@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.kafka.common.protocol.types.Field;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -61,6 +62,9 @@ public class Round extends BaseTime {
     @Column(name = "ended_at")
     private OffsetDateTime endedAt;
 
+    @Column(name = "settled")
+    private Boolean settled;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
@@ -96,6 +100,9 @@ public class Round extends BaseTime {
         this.isPrevious = event.isPrevious();
         this.isCurrent = event.isCurrent();
         this.isNext = event.isNext();
+    }
 
+    public void changeSettled() {
+        this.settled = true;
     }
 }
