@@ -43,7 +43,7 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()
-            .requestMatchers("/draft/**", "/api/draft/**", "/ws-draft", "/topic/**").permitAll() // 선수 드래프트 관련 잠시 허용
+            .requestMatchers("/draft/**", "/api/draft/**", "/ws-draft", "/topic/**", "/js/**").permitAll() // 선수 드래프트 관련 잠시 허용
             //.requestMatchers("/api/**").authenticated()
             .anyRequest().permitAll()
         )
