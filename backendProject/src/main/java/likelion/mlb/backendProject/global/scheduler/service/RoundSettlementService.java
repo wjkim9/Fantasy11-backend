@@ -8,6 +8,8 @@ import likelion.mlb.backendProject.domain.round.entity.Round;
 import likelion.mlb.backendProject.domain.round.entity.RoundScore;
 import likelion.mlb.backendProject.domain.round.repository.RoundRepository;
 import likelion.mlb.backendProject.domain.round.repository.RoundScoreRepository;
+import likelion.mlb.backendProject.domain.user.entity.SeasonUserScore;
+import likelion.mlb.backendProject.domain.user.repository.SeasonUserScoreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class RoundSettlementService {
     private final DraftRepository draftRepository;
     private final ParticipantPlayerRepository participantPlayerRepository;
     private final RoundScoreRepository roundScoreRepository;
+    private final SeasonUserScoreRepository seasonUserScoreRepository;
 
     public void settle() {
 
@@ -100,6 +103,8 @@ public class RoundSettlementService {
                 int rank = rankByParticipant.getOrDefault(p.getId(), 4);
                 int leaguePoints = (rank >= 1 && rank <= 4) ? winPts[rank - 1] : 0;
 
+                if(p.isDummy()) continue;
+
                 // 멱등성: 같은 (user_id, round_id) 는 한 번만 저장되게 UNIQUE 제약
                 if (!roundScoreRepository.existsByUserIdAndRoundId(p.getUser().getId(), round.getId())) {
                     RoundScore rs = RoundScore.RoundScoreBuilder(
@@ -109,6 +114,22 @@ public class RoundSettlementService {
                             round
                     );
                     roundScoreRepository.save(rs);
+
+                    // ✅ 시즌 누적 업서트 (없으면 생성, 있으면 가산)
+                    final UUID userId   = p.getUser().getId();
+                    final UUID seasonId = round.getSeason().getId(); // round -> season 연결 사용 (round.getSeasonId()라면 그걸 사용)
+
+                    int updated = seasonUserScoreRepository.increment(seasonId, userId, leaguePoints, totalPoints);
+                    if (updated == 0) {
+                        // 없으면 새로 생성
+                        SeasonUserScore sus = SeasonUserScore.builder()
+                                .season(round.getSeason()) // @ManyToOne이면 엔티티 주입, 단순 UUID면 그 필드로
+                                .user(p.getUser())
+                                .score(leaguePoints)      // 컬럼명: score
+                                .points(totalPoints)      // 컬럼명: points
+                                .build();
+                        seasonUserScoreRepository.save(sus);
+                    }
                 }
 
                 // 방 내 결과 컬럼 업데이트 (순위/승점 저장 등)
