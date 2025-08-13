@@ -24,10 +24,18 @@ public class PlayerEsController {
 
 
     // elasticsearch 검색 결과를 json List로 반환
-    @GetMapping("/elasticsearch")
-    public ResponseEntity<List<PlayerEsDocument>> elasticSearch(
+    @GetMapping("/searchWithKeyword")
+    public ResponseEntity<List<PlayerEsDocument>> searchWithKeyword(
             @RequestParam(value = "keyword", defaultValue = "") String keyword) {
 
-        return ResponseEntity.ok(playerEsService.search(keyword));
+        return ResponseEntity.ok(playerEsService.searchWithKeyword(keyword));
+    }
+
+    // elasticsearch 검색 결과를 json List로 반환
+    @GetMapping("/searchWithElementTypeId")
+    public ResponseEntity<List<PlayerEsDocument>> searchWithElementTypeId(
+            @RequestParam(value = "elementTypeId", defaultValue = "") String elementTypeId) {
+
+        return ResponseEntity.ok(playerEsService.searchWithElementTypeId(elementTypeId));
     }
 }

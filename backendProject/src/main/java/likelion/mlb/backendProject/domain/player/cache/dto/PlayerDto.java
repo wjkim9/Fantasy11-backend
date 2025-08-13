@@ -23,9 +23,15 @@ public class PlayerDto {
 
     private String pic; // player 사진
 
+    //a: 뛸 수 있음, d: 출전 불투명, i: 부상, s: 징계, u: 사용불(임대 등), n: 자격 없음(미등록 선수)
+    //x로 업데이트 된 건 fpl api로부터 받아온 데이터에서 삭제된 선수
+    private String status;
+
     private String teamName; // 소속팀 영어명
 
     private String teamKrName; // 소속팀 한글명
+
+    private UUID elementTypeId; // 포지션 pk값
 
     private String elementTypePluralName; // 포지션 영어명
 
@@ -40,12 +46,14 @@ public class PlayerDto {
                 .webName(p.getWebName())
                 .krName(p.getKrName())
                 .pic(p.getPic())
+                .status(p.getStatus())
 
                 // team관련 설정
                 .teamName(p.getTeamName())
                 .teamKrName(p.getTeamKrName())
 
                 // 포지션(elementType) 관련 설정
+                .elementTypeId(p.getElementTypeId())
                 .elementTypePluralName(p.getElementTypePluralName())
                 .elementTypeKrName(p.getElementTypeKrName())
                 .build()

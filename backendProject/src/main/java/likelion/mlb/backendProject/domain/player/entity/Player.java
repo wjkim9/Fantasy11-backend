@@ -160,12 +160,14 @@ public class Player extends BaseTime {
                 .webName(p.getWebName())
                 .krName(p.getKrName())
                 .pic(p.getPic())
+                .status(p.getStatus())
 
                 // team관련 설정
                 .teamName(p.getTeam().getName())
                 .teamKrName(p.getTeam().getKrName())
 
                 // 포지션(elementType) 관련 설정
+                .elementTypeId(p.getElementType().getId())
                 .elementTypePluralName(p.getElementType().getPluralName())
                 .elementTypeKrName(p.getElementType().getKrName())
                 .build()
