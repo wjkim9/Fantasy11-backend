@@ -1,11 +1,14 @@
 package likelion.mlb.backendProject.domain.match.repository;
 
 import likelion.mlb.backendProject.domain.match.dto.AssignDto;
+import likelion.mlb.backendProject.domain.draft.entity.Draft;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
+import likelion.mlb.backendProject.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ParticipantRepository extends JpaRepository<Participant, UUID> {
@@ -21,4 +24,5 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     """)
     AssignDto findAssignment(@Param("userId") UUID userId,
                              @Param("roundId") UUID roundId);
+  Optional<Participant> findByUserAndDraft(User user, Draft draft);
 }

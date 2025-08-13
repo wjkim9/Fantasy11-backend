@@ -40,5 +40,5 @@ public interface FixtureRepository extends JpaRepository<Fixture, UUID> {
     List<Fixture> findByStartedTrueAndFinishedFalse();
 
 
-    Optional<List<Fixture>> findByRoundIsPreviousTrue();
+    List<Fixture> findByRoundIsPreviousTrue();
 }

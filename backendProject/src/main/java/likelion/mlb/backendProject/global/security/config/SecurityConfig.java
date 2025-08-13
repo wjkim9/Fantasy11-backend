@@ -36,14 +36,18 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/**").permitAll()
-                .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
-                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                .requestMatchers("/login.html", "/login-success.html").permitAll()
+            .requestMatchers("/**").permitAll()
+            .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
+            .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+            .requestMatchers("/login.html", "/login-success.html").permitAll()
+            .requestMatchers("/api/**", "/oauth2/**", "/login.html").permitAll()
+            .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+            .requestMatchers("/ws/**").permitAll()
             .requestMatchers(
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()
+            .requestMatchers("/draft/**", "/api/draft/**", "/ws-draft", "/topic/**", "/js/**").permitAll() // 선수 드래프트 관련 잠시 허용
             //.requestMatchers("/api/**").authenticated()
             .anyRequest().permitAll()
         )

@@ -79,6 +79,10 @@ dependencies {
 	//스케줄 락을 위한 의존성 추가
 	implementation 'net.javacrumbs.shedlock:shedlock-spring:4.44.0'
 
+	//테스트 코드를 위한 임시 db
+	testImplementation("com.h2database:h2")
+
+
 }
 
 tasks.named('test') {

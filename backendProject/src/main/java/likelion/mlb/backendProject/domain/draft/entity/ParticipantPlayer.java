@@ -1,13 +1,15 @@
 package likelion.mlb.backendProject.domain.draft.entity;
 
 import jakarta.persistence.*;
+import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.domain.player.entity.Player;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "participant_player")
@@ -28,4 +30,26 @@ public class ParticipantPlayer {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "player_id", nullable = false)
     private Player player;
+
+    /**
+     * Player 엔티티 리스트 → PlayerDto 리스트 변환
+     */
+    public static List<DraftResponse> toDtoList(List<ParticipantPlayer> players) {
+        return players.stream().map(p -> DraftResponse.builder()
+                .participantId(p.getParticipant().getId())
+                .playerId(p.getPlayer().getId())
+                .PlayerWebName(p.getPlayer().getWebName())
+                .PlayerKrName(p.getPlayer().getKrName())
+                .PlayerPic(p.getPlayer().getPic())
+
+                // team관련 설정
+                .teamName(p.getPlayer().getTeam().getName())
+                .teamKrName(p.getPlayer().getTeam().getKrName())
+
+                // 포지션(elementType) 관련 설정
+                .elementTypePluralName(p.getPlayer().getElementType().getPluralName())
+                .elementTypeKrName(p.getPlayer().getElementType().getKrName())
+                .build()
+        ).collect(Collectors.toList());
+    }
 }
