@@ -40,10 +40,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, Applic
     registry.addEndpoint("/ws-chat")
         .setAllowedOriginPatterns("*")
         .withSockJS();
-
-
-    registry.addEndpoint("/api/ws-draft")
-        .setAllowedOriginPatterns("*");
   }
 
   @Override

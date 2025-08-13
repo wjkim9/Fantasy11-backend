@@ -1,19 +1,19 @@
 package likelion.mlb.backendProject.domain.draft.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
-import likelion.mlb.backendProject.domain.draft.entity.ParticipantPlayer;
-import likelion.mlb.backendProject.domain.draft.repository.ParticipantPlayerRepository;
-import likelion.mlb.backendProject.domain.match.entity.Participant;
-import likelion.mlb.backendProject.domain.match.repository.ParticipantRepository;
-import likelion.mlb.backendProject.global.redis.RedisPublisher;
-import likelion.mlb.backendProject.domain.player.entity.Player;
-import likelion.mlb.backendProject.domain.player.repository.PlayerRepository;
+import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
+import likelion.mlb.backendProject.domain.draft.service.DraftService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
@@ -28,39 +28,21 @@ import java.util.*;
 @Slf4j
 public class DraftController {
 
-    // redisPublisher
-    private final RedisPublisher redisPublisher;
-
-    // json<->dto 를 위한 객체
-    private final ObjectMapper objectMapper;
-
-    private final ParticipantRepository participantRepository;
-    private final PlayerRepository playerRepository;
-    private final ParticipantPlayerRepository participantPlayerRepository;
-
+    private final DraftService draftService;
 
     /*
-     * (방이 없을 시)동적으로 방 생성 및 채팅
+     * 선수 드래프트 웹소켓 통신
      */
     @MessageMapping("/draft/selectPlayer")
-    public void sendmessage(DraftRequest draftRequest
-            , Principal principal
-    ) throws JsonProcessingException {
-
-        String channel = null;
-        String msg = null;
-//        UUID participantId = ((StompPrincipal) principal).getParticipantId(); // 현 로그인 한 사용자 member pk
-
-        // 일반 메시지
-        channel = "room."+draftRequest.getDraftId();
-        msg = objectMapper.writeValueAsString(draftRequest);
-
-        redisPublisher.publish(channel, msg);
+    public void selectPlayer(@Payload DraftRequest draftRequest, Principal principal) throws JsonProcessingException {
 
         try {
-            // DB에 메시지 저장
-            saveDraft(draftRequest);
+            draftService.selectPlayer(draftRequest, principal);
         } catch (RuntimeException e) {
+            log.error(" 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        } catch (JsonProcessingException e) {
             log.error(" 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
 
             throw e;
@@ -68,24 +50,10 @@ public class DraftController {
     }
 
     /*
-     *  DB에 메시지 저장
-     **/
-    private void saveDraft(DraftRequest draftRequest) {
-        UUID participantId = draftRequest.getParticipantId(); //
-        UUID playerId = draftRequest.getPlayerId(); //
-
-        //
-        Participant participant = participantRepository.findById(participantId).orElseThrow(() ->
-                new RuntimeException());
-
-        //
-        Player player = playerRepository.findById(playerId).orElseThrow(()
-                -> new RuntimeException());
-
-        participantPlayerRepository.save(ParticipantPlayer.builder()
-                .participant(participant)
-                .player(player)
-                .build());
+    * 참여자(participant)클릭 시 해당 참여자가 선택한 선수 리스트 가져오기
+    * */
+    @GetMapping("/players/{participantId}")
+    public List<DraftResponse> getPlayersByParticipantId(@PathVariable("participantId") UUID participantId) {
+        return draftService.getPlayersByParticipantId(participantId);
     }
-
 }
