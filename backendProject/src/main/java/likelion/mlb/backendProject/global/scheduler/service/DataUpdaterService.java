@@ -1,4 +1,4 @@
-package likelion.mlb.backendProject.global.scheduler;
+package likelion.mlb.backendProject.global.scheduler.service;
 
 import likelion.mlb.backendProject.domain.player.entity.ElementType;
 import likelion.mlb.backendProject.domain.player.entity.Player;
@@ -10,7 +10,7 @@ import likelion.mlb.backendProject.domain.round.repository.FixtureRepository;
 import likelion.mlb.backendProject.domain.round.repository.RoundRepository;
 import likelion.mlb.backendProject.domain.team.entity.Team;
 import likelion.mlb.backendProject.domain.team.repository.TeamRepository;
-import likelion.mlb.backendProject.global.aop.SchedulerLog;
+import likelion.mlb.backendProject.global.configuration.FplClient;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.BootstrapStatic;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplElement;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplEvent;
@@ -18,8 +18,7 @@ import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplTeam;
 import likelion.mlb.backendProject.global.staticdata.dto.fixture.FplFixture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -30,31 +29,24 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * 한국 시간 기준 매일 오전 8시에 라운드 시간, 경기 시간, 팀, 선수를 조회해서 변경사항이 있으면 변경한다.
- */
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class DataUpdater {
+@Transactional
+public class DataUpdaterService {
 
-    private final WebClient fpl;
+    private final FplClient fpl;
     private final FixtureRepository fixtureRepository;
     private final RoundRepository roundRepository;
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
     private final ElementTypeRepository elementTypeRepository;
 
-    //매일 오전 8시에 실행
-    @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Seoul")
-    @Transactional
-    @SchedulerLog(action = "dailyScheduling")
     public void fullRefresh() {
 
 
         // 1) bootstrap-static 재조회: teams / elements(선수) / events / element_types
-        var bs = fpl.get().uri("/bootstrap-static/")
-                .retrieve().bodyToMono(BootstrapStatic.class).block();
+        var bs = fpl.getBootstrapStatic();
 
         Map<Integer, ElementType> typeMap = elementTypeRepository.findAll().stream()
                 .collect(Collectors.toMap(ElementType::getFplId, Function.identity()));
@@ -173,12 +165,7 @@ public class DataUpdater {
         //    (실제 API는 라운드별로 호출해야 하겠지만, DB 조회만 batching)
         List<FplFixture> allFplFixtures = new ArrayList<>();
         for (Integer rid : roundMap.keySet()) {
-            List<FplFixture> fl = fpl.get()
-                    .uri("/fixtures/?event={round}", rid)
-                    .retrieve()
-                    .bodyToFlux(FplFixture.class)
-                    .collectList()
-                    .block();
+            List<FplFixture> fl = fpl.getFixtures(rid);
             if (fl != null) allFplFixtures.addAll(fl);
         }
 
@@ -229,4 +216,5 @@ public class DataUpdater {
             round.setRoundTime(earliest, latest);
         }
     }
+
 }

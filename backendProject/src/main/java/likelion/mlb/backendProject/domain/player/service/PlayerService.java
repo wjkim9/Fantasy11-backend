@@ -34,18 +34,19 @@ public class PlayerService {
      */
     public List<PreviousBestPlayerDto> getPreviousBestPlayer() {
 
-        try{
             //이전 라운드의 경기들을 불러옴
             List<Fixture> fixtures = fixtureService.getFixturesOfPreviousRound();
+
+            if(fixtures.size() == 0) {
+                //아직 시즌이 시작되지 않았다면 (fixtures 값이 null이라면) 각 포지션별 cost가 높은 선수들을 리턴
+                return fallbackBestPlayersByCost();
+            }
+
             List<PlayerFixtureStat> dreamTeamStatsFetchPlayer = playerFixtureStatRepository.
                     findByFixtureInAndInDreamteamTrue(fixtures);
             return PreviousBestPlayerDto.toDto(dreamTeamStatsFetchPlayer);
 
-        } catch (RuntimeException e) {
-            //아직 시즌이 시작되지 않았다면 (fixtures 값이 null이라면) 각 포지션별 cost가 높은 선수들을 리턴
-            return fallbackBestPlayersByCost();
 
-        }
     }
 
     private List<PreviousBestPlayerDto> fallbackBestPlayersByCost() {

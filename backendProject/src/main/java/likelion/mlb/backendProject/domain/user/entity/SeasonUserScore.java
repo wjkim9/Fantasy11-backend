@@ -2,15 +2,16 @@ package likelion.mlb.backendProject.domain.user.entity;
 
 import jakarta.persistence.*;
 import likelion.mlb.backendProject.domain.round.entity.Season;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "season_user_score")
 @Getter
-@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class SeasonUserScore {
 
     @Id
@@ -18,7 +19,10 @@ public class SeasonUserScore {
     private UUID id;
 
     @Column(name = "score", nullable = false)
-    private short score = 0;
+    private Integer score = 0;
+
+    @Column(name = "points", nullable = false)
+    private Integer points = 0;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
