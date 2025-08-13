@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.domain.draft.repository;
 
+import java.util.List;
 import likelion.mlb.backendProject.domain.draft.entity.ParticipantPlayer;
 
 import likelion.mlb.backendProject.domain.match.entity.Participant;
@@ -13,6 +14,10 @@ import java.util.*;
 
 @Repository
 public interface ParticipantPlayerRepository extends JpaRepository<ParticipantPlayer, UUID> {
+
+  @Query("select distinct p.draft.id from ParticipantPlayer pp join pp.participant p join p.draft d where pp.player.id = :playerId and d.round.id = :roundId")
+  List<UUID> findDraftIdsByPlayerAndRound(@Param("playerId") UUID playerId, @Param("roundId") UUID roundId);
+
     // 특정 드래프트 방에서 특정 선수가 이미 선택 되었는 지 체크
     boolean existsByParticipant_Draft_IdAndPlayer_Id(UUID draftId, UUID playerId);
 

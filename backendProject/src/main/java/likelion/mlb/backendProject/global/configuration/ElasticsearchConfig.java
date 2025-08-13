@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 
 @Configuration
 @RequiredArgsConstructor
@@ -16,7 +15,7 @@ public class ElasticsearchConfig {
 
   @PostConstruct
   public void createChatIndex() {
-    var ops = esOps.indexOps(ChatMessageDocument.class);
+    IndexOperations ops = esOps.indexOps(ChatMessageDocument.class);
     if (!ops.exists()) {
       ops.createWithMapping();
     }
