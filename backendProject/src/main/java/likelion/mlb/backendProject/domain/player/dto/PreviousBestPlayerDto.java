@@ -14,6 +14,7 @@ public class PreviousBestPlayerDto {
     //player 테이블에서 가져옴
     private Integer playerFplId;
     private String playerName;
+    private String krName;
     private String pic;
 
     //element_type 테이블에서 가져옴
@@ -33,6 +34,7 @@ public class PreviousBestPlayerDto {
             PreviousBestPlayerDto dto = new PreviousBestPlayerDto();
             dto.playerFplId = player.getFplId();
             dto.playerName = player.getWebName();
+            dto.krName = player.getKrName();
             dto.pic = player.getPic();
             dto.etName = player.getElementType().getPluralName();
             dto.teamName = player.getTeam().getName();
@@ -41,5 +43,24 @@ public class PreviousBestPlayerDto {
         }
         return dtos;
     }
+
+    public static List<PreviousBestPlayerDto> toDtoFromPlayer(List<Player> players) {
+        List<PreviousBestPlayerDto> dtos = new ArrayList<>();
+        for (Player player : players) {
+            PreviousBestPlayerDto dto = new PreviousBestPlayerDto();
+            dto.playerFplId = player.getFplId();
+            dto.playerName = player.getWebName();
+            dto.krName = player.getKrName();
+            dto.pic = player.getPic();
+            dto.etName = player.getElementType().getPluralName();
+            dto.teamName = player.getTeam().getName();
+            dto.totalPoints = 0;
+            dtos.add(dto);
+        }
+        return dtos;
+    }
+
+
+
 
 }

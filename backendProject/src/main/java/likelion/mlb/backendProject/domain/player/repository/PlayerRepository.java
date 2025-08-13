@@ -1,7 +1,10 @@
 package likelion.mlb.backendProject.domain.player.repository;
 
 import jakarta.transaction.Transactional;
+import likelion.mlb.backendProject.domain.player.dto.PreviousBestPlayerDto;
 import likelion.mlb.backendProject.domain.player.entity.Player;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -43,4 +46,19 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
                 .collect(Collectors.toMap(Player::getFplId, Function.identity()));
     }
 
+    @Query("""
+          select p
+            from Player p
+           where p.elementType.fplId = :type
+           and p.status = 'a'
+        order by p.cost desc
+        """)
+    @EntityGraph(attributePaths = {
+            "elementType",
+            "team",
+    })
+    List<Player> findBestByType(@Param("type") int type, Pageable pageable);
+
+    @Query("SELECT p FROM Player p " +"JOIN FETCH p.team t " +"JOIN FETCH p.elementType et")
+    List<Player> findAllWithTeamAndElementType();
 }

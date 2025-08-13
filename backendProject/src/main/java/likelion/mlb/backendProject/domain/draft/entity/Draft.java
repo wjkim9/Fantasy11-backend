@@ -1,9 +1,12 @@
 package likelion.mlb.backendProject.domain.draft.entity;
 
 import jakarta.persistence.*;
+import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.domain.round.entity.Round;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -28,4 +31,7 @@ public class Draft {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "round_id", nullable = false)
     private Round round;
+
+    @OneToMany(mappedBy = "draft")
+    private List<Participant> participants = new ArrayList<>();
 }
