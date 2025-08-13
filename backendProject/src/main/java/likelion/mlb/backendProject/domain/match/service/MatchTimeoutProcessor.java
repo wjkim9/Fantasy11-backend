@@ -27,7 +27,6 @@ public class MatchTimeoutProcessor {
     private final DraftRepository draftRepository;
     private final ParticipantRepository participantRepository;
     private final RoundRepository roundRepository;
-
     private final DraftTimingService draftTimingService;
     private final ChatRoomService chatRoomService;
 
@@ -44,38 +43,37 @@ public class MatchTimeoutProcessor {
         Set<String> members = redisTemplate.opsForSet().members(SESSION_KEY);
         if (members == null || members.isEmpty()) return Map.of();
 
-        // SET은 순서가 없으니 공정성을 위해 셔플
+        // 공정성 위해 셔플
         List<String> users = new ArrayList<>(members);
         Collections.shuffle(users);
 
-        // 2) 4인씩 그룹핑
+        // 2) 4인씩 그룹핑 + 마지막 그룹 패딩
         List<List<String>> groups = splitBySize(users, 4);
-
-        // 2-1) 마지막 그룹이 4 미만이면 더미로 채움
         if (!groups.isEmpty()) {
             List<String> last = groups.get(groups.size() - 1);
             if (last.size() < 4) padWithDummies(last);
         }
 
-        //FIXME 구조 개멍청함
+        // 3) 라운드 조회
         RoundInfo roundInfo = draftTimingService.getNextDraftWindowOrThrow();
-        UUID roundId = roundInfo.getId(); // RoundInfo에 id가 있다고 가정
+        UUID roundId = roundInfo.getId();
         Round round = roundRepository.findById(roundId)
                 .orElseThrow(() -> new BaseException(ErrorCode.ROUND_NOT_FOUND));
 
         Map<String, AssignDto> result = new HashMap<>();
         List<String> usedRealUserIds = new ArrayList<>();
 
-        // 3) 그룹별 Draft/Participant INSERT
-        // FIXME 이러면 누락?
+        // 4) 그룹별 Draft/Participant INSERT
         for (List<String> group : groups) {
-            if (group.size() != 4) continue; // 방은 항상 4명으로만 생성
+            if (group.size() != 4) continue; // 방은 항상 4명
 
-            // Draft 생성
             Draft draft = new Draft();
             draft.setId(UUID.randomUUID());
             draft.setRound(round);
+            // draft.setDeleted(false); // ← is_deleted NOT NULL이고 default 없다면 주석 해제
             draftRepository.save(draft);
+
+            // 필요 시 채팅방 생성
             chatRoomService.createRoom(draft.getId());
 
             short userNumber = 1;
@@ -92,13 +90,12 @@ public class MatchTimeoutProcessor {
                     p.setUser(null);
                 } else {
                     p.setDummy(false);
-                    // 프록시 참조만 잡아도 OK (엔티티 설계에 따라 변경)
-                    User userRef = new User();
+                    User userRef = new User(); // 프록시 참조만 세팅
                     userRef.setId(UUID.fromString(uid));
                     p.setUser(userRef);
 
-                    // 결과 매핑 (나중에 페이지 이동에 씀)
-                    result.put(uid, new AssignDto(draft.getId(), (short)(p.getUserNumber())));
+                    // 결과 매핑
+                    result.put(uid, new AssignDto(draft.getId(), (short) (p.getUserNumber())));
                     usedRealUserIds.add(uid);
                 }
                 participants.add(p);
@@ -106,7 +103,7 @@ public class MatchTimeoutProcessor {
             participantRepository.saveAll(participants);
         }
 
-        // 4) 사용된 실제 유저만 Redis에서 제거 (전체 삭제 X)
+        // 5) 사용된 실제 유저만 Redis에서 제거
         if (!usedRealUserIds.isEmpty()) {
             redisTemplate.opsForSet().remove(SESSION_KEY, usedRealUserIds.toArray());
         }

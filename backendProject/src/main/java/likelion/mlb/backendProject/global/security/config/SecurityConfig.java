@@ -36,17 +36,15 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
-            .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-            .requestMatchers("/login.html", "/login-success.html").permitAll()
-            .requestMatchers("/ws/**").permitAll()  // ✅ WebSocket 경로 허용
-            .requestMatchers("/**").permitAll()
-            .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/**").permitAll()
+                .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                .requestMatchers("/login.html", "/login-success.html").permitAll()
             .requestMatchers(
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()
-            .requestMatchers("/api/**").authenticated()
+            //.requestMatchers("/api/**").authenticated()
             .anyRequest().permitAll()
         )
         .oauth2Login(oauth2 -> oauth2
