@@ -36,6 +36,10 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/**").permitAll()
+            .requestMatchers("/api/auth/**", "/oauth2/**", "/login.html").permitAll()
+            .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+            .requestMatchers("/login.html", "/login-success.html").permitAll()
             .requestMatchers("/api/**", "/oauth2/**", "/login.html").permitAll()
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
             .requestMatchers("/ws/**").permitAll()

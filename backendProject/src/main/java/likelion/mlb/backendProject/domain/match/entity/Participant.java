@@ -22,7 +22,7 @@ public class Participant {
     private short userNumber;
 
     @Column(name = "isDummy", nullable = false)
-    private boolean isDummy;
+    private boolean dummy;
 
     @Column(name = "score", nullable = false)
     private Integer score = 0;
