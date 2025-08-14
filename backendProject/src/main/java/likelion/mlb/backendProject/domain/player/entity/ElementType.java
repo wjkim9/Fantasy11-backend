@@ -1,6 +1,10 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
+import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
+import likelion.mlb.backendProject.domain.player.dto.ElementTypeDto;
+import likelion.mlb.backendProject.domain.player.dto.PreviousBestPlayerDto;
+import likelion.mlb.backendProject.domain.player.entity.live.PlayerFixtureStat;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplElementType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +14,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "element_type")
@@ -61,5 +66,15 @@ public class ElementType {
             ets.add(et);
         }
         return ets;
+    }
+
+    public static List<ElementTypeDto> toDtoList(List<ElementType> elementTypes) {
+        return elementTypes.stream().map(e -> ElementTypeDto.builder()
+                .id(e.getId()) // 선수 포지션 pk값
+                .fplId(e.getFplId()) // fpl의 각 포지션별 id
+                .pluralName(e.getPluralName()) //ex) Goalkeepers, Defenders, fpl에서 받아오는 영어 이름
+                .krName(e.getKrName()) // 선수 포지션 한글명
+                .build()
+        ).collect(Collectors.toList());
     }
 }
