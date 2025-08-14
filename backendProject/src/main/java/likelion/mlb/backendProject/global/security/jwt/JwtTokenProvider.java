@@ -11,6 +11,8 @@ import java.security.Key;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,6 +23,8 @@ public class JwtTokenProvider {
   private String secretKey;
 
   private Key key;
+
+  private final UserDetailsService userDetailsService;
 
   private static final long ACCESS_TOKEN_VALID_TIME = 60 * 60 * 1000L; // 1시간
   private static final long REFRESH_TOKEN_VALID_TIME = 60 * 60 * 24 * 14 * 1000L; // 14일
@@ -64,4 +68,12 @@ public class JwtTokenProvider {
         .getSubject();
   }
 
+    // ✅ 추가: 토큰 → Authentication
+    public Authentication getAuthentication(String token) {
+        String email = getEmail(token);
+        var userDetails = userDetailsService.loadUserByUsername(email); // CustomUserDetails 기대
+        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities()
+        );
+    }
 }
