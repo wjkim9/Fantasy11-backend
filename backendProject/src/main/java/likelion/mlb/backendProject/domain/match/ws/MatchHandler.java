@@ -1,4 +1,4 @@
-package likelion.mlb.backendProject.domain.match.handler;
+package likelion.mlb.backendProject.domain.match.ws;
 
 import likelion.mlb.backendProject.domain.match.dto.AssignDto;
 import likelion.mlb.backendProject.domain.match.service.MatchService;

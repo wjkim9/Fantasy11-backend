@@ -1,4 +1,4 @@
-package likelion.mlb.backendProject.domain.match.dto;
+package likelion.mlb.backendProject.domain.match.ws.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;

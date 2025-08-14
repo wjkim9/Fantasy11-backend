@@ -1,6 +1,6 @@
 package likelion.mlb.backendProject.global.configuration;
 
-import likelion.mlb.backendProject.domain.match.handler.MatchHandler;
+import likelion.mlb.backendProject.domain.match.ws.MatchHandler;
 import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
