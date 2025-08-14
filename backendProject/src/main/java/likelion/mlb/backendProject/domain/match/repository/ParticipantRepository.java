@@ -1,6 +1,8 @@
 package likelion.mlb.backendProject.domain.match.repository;
 
+
 import likelion.mlb.backendProject.domain.match.dto.AssignDto;
+
 import likelion.mlb.backendProject.domain.draft.entity.Draft;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.domain.user.entity.User;
@@ -14,6 +16,7 @@ import java.util.UUID;
 public interface ParticipantRepository extends JpaRepository<Participant, UUID> {
   boolean existsByDraft_IdAndUser_Id(UUID draftId, UUID userId);
 
+
     @Query("""
        select new likelion.mlb.backendProject.domain.match.dto.AssignDto(p.draft.id, p.userNumber)
        from Participant p
@@ -24,5 +27,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     """)
     AssignDto findAssignment(@Param("userId") UUID userId,
                              @Param("roundId") UUID roundId);
+
   Optional<Participant> findByUserAndDraft(User user, Draft draft);
 }
