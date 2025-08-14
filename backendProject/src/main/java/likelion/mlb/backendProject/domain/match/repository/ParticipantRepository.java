@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
+//FIXME 주석 추가할 것
 public interface ParticipantRepository extends JpaRepository<Participant, UUID> {
   boolean existsByDraft_IdAndUser_Id(UUID draftId, UUID userId);
 
