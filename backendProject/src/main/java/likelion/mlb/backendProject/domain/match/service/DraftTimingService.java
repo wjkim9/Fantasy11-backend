@@ -31,8 +31,8 @@ public class DraftTimingService {
         LocalDateTime startedAtKST = r.getStartedAt().atZoneSameInstant(KST).toLocalDateTime();
 
         LocalDate draftDay = startedAtKST.toLocalDate().minusDays(2);
-        LocalDateTime openAt = LocalDateTime.of(draftDay, LocalTime.of(10, 00));
-        LocalDateTime lockAt = LocalDateTime.of(draftDay, LocalTime.of(18, 30));
+        LocalDateTime openAt = LocalDateTime.of(draftDay, LocalTime.of(8, 00));
+        LocalDateTime lockAt = LocalDateTime.of(draftDay, LocalTime.of(12,20));
 
         return new RoundInfo(
                 r.getId(),
