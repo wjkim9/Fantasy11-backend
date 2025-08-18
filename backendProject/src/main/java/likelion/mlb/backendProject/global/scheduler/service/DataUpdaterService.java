@@ -100,24 +100,24 @@ public class DataUpdaterService {
                               Map<Integer, Team> teamMap) {
 
         // 1) DTO 에서 모든 코드 수집
-        List<Integer> allCodes = elements.stream()
-                .map(FplElement::getCode)
+        List<Integer> allFplIds = elements.stream()
+                .map(FplElement::getFplId)
                 .toList();
 
         // 2) 한 번에 DB 조회: 기존 선수들만
-        List<Player> existingPlayers = playerRepository.findAllByCodeIn(allCodes);
+        List<Player> existingPlayers = playerRepository.findAllByFplIdIn(allFplIds);
         Map<Integer, Player> existingMap = existingPlayers.stream()
-                .collect(Collectors.toMap(Player::getCode, Function.identity()));
+                .collect(Collectors.toMap(Player::getFplId, Function.identity()));
 
         // 3) 삭제 처리 (DB에 남아있으나 allCodes 에 없는 선수들)
-        playerRepository.markDeletedByCodeNotIn(allCodes);
+        playerRepository.markDeletedByFplIdNotIn(allFplIds);
 
         // 4) 새로 추가할 선수들 모아두기
         List<Player> toInsert = new ArrayList<>();
 
         // 5) DTO 순회하면서 in-memory upsert
         for (FplElement dto : elements) {
-            Player existing = existingMap.get(dto.getCode());
+            Player existing = existingMap.get(dto.getFplId());
             if (existing != null) {
                 // 기존 선수면 필드만 업데이트 (dirty-checking 으로 커밋 시점에 UPDATE)
                 existing.updatePlayer(dto, typeMap, teamMap);

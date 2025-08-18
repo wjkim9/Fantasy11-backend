@@ -114,11 +114,11 @@ public class Fixture extends BaseTime {
     /**
      * 실시간으로 진행 중인 경기 정보 업데이트
      */
-    public void updateLiveFixture(LiveFixtureDto dto) {
-        this.started = dto.getStarted();
-        this.finished = dto.getFinished();
-        this.homeTeamScore = dto.getHomeScore();
-        this.awayTeamScore = dto.getAwayScore();
+    public void updateLiveFixture(FplFixture dto) {
+        this.started = dto.isStarted();
+        this.finished = dto.isFinished();
+        this.homeTeamScore = dto.getHomeTeamScore();
+        this.awayTeamScore = dto.getAwayTeamScore();
         this.minutes = dto.getMinutes();
     }
 }

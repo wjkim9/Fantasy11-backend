@@ -12,6 +12,7 @@ import likelion.mlb.backendProject.domain.round.entity.Round;
 import likelion.mlb.backendProject.domain.round.repository.FixtureRepository;
 import likelion.mlb.backendProject.domain.round.repository.RoundRepository;
 import likelion.mlb.backendProject.global.configuration.FplClient;
+import likelion.mlb.backendProject.global.staticdata.dto.fixture.FplFixture;
 import likelion.mlb.backendProject.global.staticdata.dto.live.LiveElementDto;
 import likelion.mlb.backendProject.global.staticdata.dto.live.LiveEventDto;
 import likelion.mlb.backendProject.global.staticdata.dto.live.LiveFixtureDto;
@@ -24,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,19 +50,19 @@ public class LiveDataService {
 
             // 해당 라운드의 경기 정보를 API를 통해 받아옴
             LiveEventDto liveData = fetchLiveData(currentRound);
-
+            List<FplFixture> fixtures = fpl.getFixtures(currentRound.getRound());
             // 진행중인 경기가 없으면 종료
-            if (hasNoActiveFixtures(liveData)) {
+            if (hasNoActiveFixtures(fixtures)) {
                 log.info("진행 중인 경기가 없어 스케줄링을 종료합니다.");
                 return;
             }
 
             // 경기 정보 업데이트
-            int updatedFixtures = updateLiveFixtures(liveData.getFixtures());
+            int updatedFixtures = updateLiveFixtures(fixtures);
             log.info("업데이트된 경기 수: {}", updatedFixtures);
 
             // 선수 실시간 데이터 정보 업데이트
-            int updatedPlayers = processPlayerEvents(liveData);
+            int updatedPlayers = processPlayerEvents(liveData, fixtures);
             log.info("업데이트된 선수 수: {}", updatedPlayers);
 
         } catch (Exception e) {
@@ -78,33 +80,29 @@ public class LiveDataService {
         return fpl.getLive(currentRound.getRound());
     }
 
-    private boolean hasNoActiveFixtures(LiveEventDto liveData) {
-        if (liveData.getFixtures() == null || liveData.getFixtures().isEmpty()) {
-            return true;
-        }
-
-        // 시작되었거나 진행중인 경기가 있는지 확인
-        return liveData.getFixtures().stream()
-                .noneMatch(fixture -> fixture.getStarted() || fixture.getMinutes() > 0);
+    private boolean hasNoActiveFixtures(List<FplFixture> fixtures) {
+        if (fixtures == null || fixtures.isEmpty()) return true;
+        return fixtures.stream().noneMatch(f ->
+                Boolean.TRUE.equals(f.isStarted()) || (f.getMinutes() != null && f.getMinutes() > 0));
     }
 
-    private int updateLiveFixtures(List<LiveFixtureDto> fixtureList) {
+    private int updateLiveFixtures(List<FplFixture> fixtureList) {
         if (fixtureList == null || fixtureList.isEmpty()) {
             return 0;
         }
 
         // N+1 문제 해결을 위한 배치 조회
         List<Integer> fplIds = fixtureList.stream()
-                .map(LiveFixtureDto::getFixtureId)
+                .map(FplFixture::getFplId)
                 .toList();
 
         Map<Integer, Fixture> fixtureMap = fixtureRepository.findAllByFplIdInAsMap(fplIds);
         int updatedCount = 0;
 
-        for (LiveFixtureDto dto : fixtureList) {
-            Fixture fixture = fixtureMap.get(dto.getFixtureId());
+        for (FplFixture dto : fixtureList) {
+            Fixture fixture = fixtureMap.get(dto.getFplId());
             if (fixture == null) {
-                log.warn("매핑된 Fixture가 없습니다. fplId={}", dto.getFixtureId());
+                log.warn("매핑된 Fixture가 없습니다. fplId={}", dto.getFplId());
                 continue;
             }
 
@@ -114,29 +112,44 @@ public class LiveDataService {
                 updatedCount++;
                 log.debug("Fixture 업데이트 완료 {}: started={}, finished={}, minutes={}, homeScore={}, awayScore={}",
                         fixture.getFplId(), fixture.isStarted(), fixture.isFinished(),
-                        fixture.getMinutes(), dto.getHomeScore(), dto.getAwayScore());
+                        fixture.getMinutes(), dto.getHomeTeamScore(), dto.getAwayTeamScore());
             }
         }
 
         return updatedCount;
     }
 
-    private boolean hasFixtureChanged(Fixture fixture, LiveFixtureDto dto) {
-        return fixture.isStarted() != dto.getStarted() ||
-                fixture.isFinished() != dto.getFinished() ||
-                fixture.getMinutes() != dto.getMinutes() ||
-                !fixture.getHomeTeamScore().equals(dto.getHomeScore()) ||
-                !fixture.getAwayTeamScore().equals(dto.getAwayScore());
-    }
+//    private boolean hasFixtureChanged(Fixture fixture, FplFixture dto) {
+//        return fixture.isStarted() != dto.isStarted() ||
+//                fixture.isFinished() != dto.isFinished() ||
+//                fixture.getMinutes() != dto.getMinutes() ||
+//                !fixture.getHomeTeamScore().equals(dto.getHomeTeamScore()) ||
+//                !fixture.getAwayTeamScore().equals(dto.getAwayTeamScore());
+//    }
+private boolean hasFixtureChanged(Fixture fixture, FplFixture dto) {
+    // minutes가 Integer라면 언박싱 전에 기본값 처리
+    int fMin = fixture.getMinutes() == null ? 0 : fixture.getMinutes();
+    int dMin = dto.getMinutes() == null ? 0 : dto.getMinutes();
 
-    private int processPlayerEvents(LiveEventDto liveData) {
+    // started/finished가 Boolean일 수도 있으니 null-safe 비교
+    boolean startedChanged  = !Objects.equals(fixture.isStarted(),  dto.isStarted());
+    boolean finishedChanged = !Objects.equals(fixture.isFinished(), dto.isFinished());
+
+    boolean homeScoreChanged = !Objects.equals(fixture.getHomeTeamScore(), dto.getHomeTeamScore());
+    boolean awayScoreChanged = !Objects.equals(fixture.getAwayTeamScore(), dto.getAwayTeamScore());
+    boolean minutesChanged   = (fMin != dMin);
+
+    return startedChanged || finishedChanged || homeScoreChanged || awayScoreChanged || minutesChanged;
+}
+
+    private int processPlayerEvents(LiveEventDto liveData, List<FplFixture> fixtures) {
         if (liveData.getElements() == null || liveData.getElements().isEmpty()) {
             log.info("처리할 선수 데이터가 없습니다.");
             return 0;
         }
 
         // 진행중인 경기 필터링
-        List<Integer> activeFixtureIds = getActiveFixtureIds(liveData);
+        List<Integer> activeFixtureIds = getActiveFixtureIds(fixtures);
         if (activeFixtureIds.isEmpty()) {
             log.info("진행중인 경기가 없습니다.");
             return 0;
@@ -192,10 +205,10 @@ public class LiveDataService {
         return updatedCount;
     }
 
-    private List<Integer> getActiveFixtureIds(LiveEventDto liveData) {
-        return liveData.getFixtures().stream()
-                .filter(fixture -> fixture.getStarted() && !fixture.getFinished())
-                .map(LiveFixtureDto::getFixtureId)
+    private List<Integer> getActiveFixtureIds(List<FplFixture> liveData) {
+        return liveData.stream()
+                .filter(fixture -> fixture.isStarted() && !fixture.isFinished())
+                .map(FplFixture::getFplId)
                 .toList();
     }
 
@@ -310,7 +323,7 @@ public class LiveDataService {
 
         MatchEvent saved = matchEventRepository.save(matchEvent);
 
-        notificationService.sendMatchAlert(saved);
+        //notificationService.sendMatchAlert(saved);
 
     }
 }
