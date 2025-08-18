@@ -14,7 +14,7 @@ public class ChatMessage {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
