@@ -1,8 +1,17 @@
 package likelion.mlb.backendProject.global.configuration;
 
 import lombok.RequiredArgsConstructor;
+
+import likelion.mlb.backendProject.domain.chat.repository.ChatRoomRepository;
+import likelion.mlb.backendProject.domain.draft.repository.DraftRepository;
+import likelion.mlb.backendProject.domain.match.repository.ParticipantRepository;
+import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
+import likelion.mlb.backendProject.domain.user.repository.UserRepository;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -12,14 +21,20 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
+
+import java.security.Principal;
+import java.util.Map;
 
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
 import likelion.mlb.backendProject.domain.chat.repository.ChatMembershipRepository;
 import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
 
@@ -44,7 +59,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
   @Override
   public void configureClientInboundChannel(ChannelRegistration registration) {
-
     // 1) CONNECT 시 JWT 인증 처리 (런타임 조회)
     ChannelInterceptor jwtConnect = new ChannelInterceptor() {
       @Override

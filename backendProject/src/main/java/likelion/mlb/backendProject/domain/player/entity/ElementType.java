@@ -1,10 +1,7 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
-import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.player.dto.ElementTypeDto;
-import likelion.mlb.backendProject.domain.player.dto.PreviousBestPlayerDto;
-import likelion.mlb.backendProject.domain.player.entity.live.PlayerFixtureStat;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplElementType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
