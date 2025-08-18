@@ -10,12 +10,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 //FIXME 주석 추가할 것
 public interface ParticipantRepository extends JpaRepository<Participant, UUID> {
-  boolean existsByDraft_IdAndUser_Id(UUID draftId, UUID userId);
+    boolean existsByDraft_IdAndUser_Id(UUID draftId, UUID userId);
 
 
     @Query("""
@@ -29,5 +30,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     AssignDto findAssignment(@Param("userId") UUID userId,
                              @Param("roundId") UUID roundId);
 
-  Optional<Participant> findByUserAndDraft(User user, Draft draft);
+    Optional<Participant> findByUserAndDraft(User user, Draft draft);
+
+    List<Participant> findByDraft(Draft draft);
 }

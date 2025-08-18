@@ -1,17 +1,24 @@
 package likelion.mlb.backendProject.domain.match.entity;
 
 import jakarta.persistence.*;
+
+import likelion.mlb.backendProject.domain.draft.dto.DraftParticipant;
 import likelion.mlb.backendProject.domain.draft.entity.Draft;
 import likelion.mlb.backendProject.domain.user.entity.User;
-import lombok.Getter;
-import lombok.Setter;
 
+import lombok.*;
+
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "participant")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Participant {
 
     @Id
@@ -42,5 +49,23 @@ public class Participant {
         this.score = leaguePoint;
         this.rank = rank;
 
+    }
+
+    /**
+     * Participant 엔티티 리스트 → DraftParticipant 리스트 변환
+     */
+    public static List<DraftParticipant> toDtoList(List<Participant> participants) {
+
+        return participants.stream().map(p -> DraftParticipant.builder()
+
+                .participantId(p.getId())
+                .participantUserNumber(p.getUserNumber())
+                .participantDummy(p.isDummy())
+
+                .userEmail(p.getUser() != null ? p.getUser().getEmail() : null)
+                .userName(p.getUser() != null ? p.getUser().getName() : null)
+
+                .build()
+        ).collect(Collectors.toList());
     }
 }

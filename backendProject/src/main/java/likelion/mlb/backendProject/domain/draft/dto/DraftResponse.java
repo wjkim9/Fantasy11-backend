@@ -17,15 +17,19 @@ public class DraftResponse {
 
     private UUID playerId; // player pk값
 
-    private String PlayerWebName; // player 영어 이름
+    private String playerWebName; // player 영어 이름
 
-    private String PlayerKrName; // player 한글 이름
+    private String playerKrName; // player 한글 이름
 
-    private String PlayerPic; // player 사진
+    private String playerPic; // player 사진
+
+    private UUID teamId; // 소속팀 pk값
 
     private String teamName; // 소속팀 영어명
 
     private String teamKrName; // 소속팀 한글명
+
+    private UUID elementTypeId; // 포지션 pk값
 
     private String elementTypePluralName; // 포지션 영어명
 

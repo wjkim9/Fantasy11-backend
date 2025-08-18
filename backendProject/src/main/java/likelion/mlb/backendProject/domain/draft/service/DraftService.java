@@ -3,6 +3,7 @@ package likelion.mlb.backendProject.domain.draft.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import likelion.mlb.backendProject.domain.draft.dto.DraftParticipant;
 import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.draft.entity.Draft;
@@ -22,12 +23,9 @@ import likelion.mlb.backendProject.global.redis.RedisPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,6 +47,7 @@ public class DraftService {
     private final DraftRepository draftRepository;
 
 
+    @Transactional
     public void selectPlayer(DraftRequest draftRequest
             , java.security.Principal principal
     ) throws JsonProcessingException {
@@ -57,7 +56,6 @@ public class DraftService {
                 .existsByParticipant_Draft_IdAndPlayer_Id(draftRequest.getDraftId(), draftRequest.getPlayerId());
 
         draftRequest.setAlreadySelected(alreadySelected);
-
 
         // participant 객체 추출
         var auth = (org.springframework.security.core.Authentication) principal;
@@ -78,33 +76,21 @@ public class DraftService {
 //        UUID participantId = ((StompPrincipal) principal).getParticipantId(); // 현 로그인 한 사용자 member pk
 
         // 일반 메시지
-        channel = "room."+draftRequest.getDraftId();
+        channel = "draft."+draftRequest.getDraftId();
         msg = objectMapper.writeValueAsString(draftRequest);
 
-        redisPublisher.publish(channel, msg);
-
-        try {
+        if(!alreadySelected) {
             // DB에 참여자와 뽑은 선수 정보 저장
-//            saveDraft(draftRequest, participant);
-        } catch (RuntimeException e) {
-            log.error(" 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
-
-            throw e;
+            saveDraft(draftRequest, participant);
         }
+        redisPublisher.publish(channel, msg);
     }
 
     /*
      *  DB에 참여자와 뽑은 선수 정보 저장
      **/
     private void saveDraft(DraftRequest draftRequest, Participant participant) {
-//        UUID participantId = draftRequest.getParticipantId(); //
         UUID playerId = draftRequest.getPlayerId(); //
-
-        //
-//        Participant participant = participantRepository.findById(participantId).orElseThrow(() ->
-//                new RuntimeException());
-
-        //
         Player player = playerRepository.findById(playerId).orElseThrow(()
                 -> new RuntimeException());
 
@@ -119,5 +105,37 @@ public class DraftService {
 
         return ParticipantPlayer.toDtoList(playerList);
     }
+
+    public List<DraftParticipant> getParticipantsByDraftId(UUID draftId) {
+        Draft draft = draftRepository.findById(draftId)
+                .orElseThrow(() -> new IllegalStateException("Draft not found by draftId " + draftId));
+
+        return Participant.toDtoList(participantRepository.findByDraft(draft));
+    }
+
+    public List<DraftResponse> getAllPlayersByDraftId(UUID draftId) {
+        List<ParticipantPlayer> participantPlayers = participantPlayerRepository.findByParticipant_Draft_Id(draftId);
+
+        return ParticipantPlayer.toDtoList(participantPlayers);
+    }
+
+    /*
+     * 한 참가자가 선수를 드래프트 했을 시 포지션 별 최대/최소 값 유지하는 지 확인
+     * */
+    private boolean isWithinSquadLimits (UUID participantId, UUID elementTypeId) {
+        Boolean result = participantPlayerRepository.isWithinSquadLimits(participantId, elementTypeId);
+
+        return result;
+    }
+
+    /*
+     * 한 참가자가 선수를 드래프트 했을 시 포지션 별 최대/최소 값 유지하는 지 확인(http api테스트용)
+     * */
+    public boolean isWithinSquadLimitsTest (UUID participantId, UUID elementTypeId) {
+        Boolean result = participantPlayerRepository.isWithinSquadLimits(participantId, elementTypeId);
+
+        return result;
+    }
+
 
 }
