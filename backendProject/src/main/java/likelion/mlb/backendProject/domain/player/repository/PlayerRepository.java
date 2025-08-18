@@ -22,24 +22,24 @@ import java.util.stream.Collectors;
 public interface PlayerRepository extends JpaRepository<Player, UUID> {
 
 
-    List<Player> findAllByCodeIn(List<Integer> codes);
+    List<Player> findAllByFplIdIn(List<Integer> codes);
     @Query("""
         SELECT p 
           FROM Player p
           JOIN FETCH p.team t
-         WHERE p.code = :fplId
+         WHERE p.fplId = :fplId
         """)
     Optional<Player> findByFplId(@Param("fplId") Integer fplId);
 
     @Modifying
     @Transactional
-    @Query("UPDATE Player p SET p.status = 'x' WHERE p.code NOT IN :codes")
-    void markDeletedByCodeNotIn(@Param("codes") List<Integer> codes);
+    @Query("UPDATE Player p SET p.status = 'x' WHERE p.fplId NOT IN :fplIds")
+    void markDeletedByFplIdNotIn(@Param("fplIds") List<Integer> fplIds);
 
 
 
-    @Query("SELECT p FROM Player p WHERE p.fplId IN :ids")
-    List<Player> findAllByFplIdIn(@Param("ids") List<Integer> ids);
+//    @Query("SELECT p FROM Player p WHERE p.fplId IN :ids")
+//    List<Player> findAllByFplIdIn(@Param("ids") List<Integer> ids);
 
     default Map<Integer, Player> findAllByFplIdInAsMap(List<Integer> ids) {
         return findAllByFplIdIn(ids).stream()

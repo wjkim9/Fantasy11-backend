@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.global.staticdata.dto.live;
 
+import likelion.mlb.backendProject.global.staticdata.dto.fixture.FplFixture;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,5 +12,5 @@ public class LiveEventDto {
     private List<LiveElementDto> elements;
 
     // 경기별 진행 상태
-    private List<LiveFixtureDto> fixtures;
+    private List<FplFixture> fixtures;
 }

@@ -140,6 +140,7 @@ public class Player extends BaseTime {
         String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
                 + element.getCode() + ".png";
         this.pic = picUri;
+        this.code = element.getCode();
         this.status = element.getStatus();
         this.fplId = element.getFplId();
         this.news = element.getNews();

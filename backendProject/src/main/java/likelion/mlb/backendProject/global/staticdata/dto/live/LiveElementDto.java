@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 public class LiveElementDto {
     // FPL player ID
-    @JsonProperty("element")
+    @JsonProperty("id")
     private Integer playerId;
 
     // 실시간 집계 스탯
