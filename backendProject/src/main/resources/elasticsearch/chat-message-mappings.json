@@ -1,0 +1,9 @@
+{
+  "properties": {
+    "content": {
+      "type": "text",
+      "analyzer": "ngram_analyzer",
+      "search_analyzer": "ngram_analyzer"
+    }
+  }
+}
