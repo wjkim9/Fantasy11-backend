@@ -73,8 +73,8 @@ public class MatchTimeoutProcessor {
             // draft.setDeleted(false); // ← is_deleted NOT NULL이고 default 없다면 주석 해제
             draftRepository.save(draft);
 
-            // 필요 시 채팅방 생성
-            chatRoomService.createRoom(draft.getId());
+            // 채팅방 생성로직 - 재혁
+            chatRoomService.createForDraft(draft.getId());
 
             short userNumber = 1;
             List<Participant> participants = new ArrayList<>(4);

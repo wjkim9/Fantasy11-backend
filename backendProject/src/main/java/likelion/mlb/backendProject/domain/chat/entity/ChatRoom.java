@@ -1,19 +1,12 @@
 package likelion.mlb.backendProject.domain.chat.entity;
-
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
-import likelion.mlb.backendProject.domain.draft.entity.Draft;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "chat_room")
-@Getter
-@Setter
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ChatRoom {
 
     @Id
@@ -21,26 +14,14 @@ public class ChatRoom {
     private UUID id;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "draft_id", nullable = false)
-    private Draft draft;
+    @Column(name = "draft_id", nullable = false)
+    private UUID draftId;
 
-    @OneToMany(
-        mappedBy = "chatRoom",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true
-    )
-    private List<ChatMessage> messages = new ArrayList<>();
-
-    public void addMessage(ChatMessage msg) {
-        messages.add(msg);
-        msg.setChatRoom(this);
-    }
-
-    public void removeMessage(ChatMessage msg) {
-        messages.remove(msg);
-        msg.setChatRoom(null);
+    @PrePersist
+    void prePersist() {
+        if (id == null) id = UUID.randomUUID();
+        if (createdAt == null) createdAt = Instant.now();
     }
 }
