@@ -322,7 +322,7 @@ private boolean hasFixtureChanged(Fixture fixture, FplFixture dto) {
 
         MatchEvent saved = matchEventRepository.save(matchEvent);
 
-        //notificationService.sendMatchAlert(saved);
+        notificationService.sendMatchAlert(saved);
 
     }
 }

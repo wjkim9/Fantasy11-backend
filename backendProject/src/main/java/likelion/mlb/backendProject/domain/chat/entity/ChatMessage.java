@@ -14,7 +14,6 @@ public class ChatMessage {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Lob
     @Column(name = "content", nullable = false)
     private String content;
 
