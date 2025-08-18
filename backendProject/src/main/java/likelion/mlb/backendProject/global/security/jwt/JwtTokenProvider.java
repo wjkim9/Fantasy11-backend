@@ -11,6 +11,7 @@ import java.security.Key;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,7 @@ public class JwtTokenProvider {
 
   private Key key;
 
-  private final UserDetailsService userDetailsService;
+  private final @Lazy UserDetailsService userDetailsService;
 
   private static final long ACCESS_TOKEN_VALID_TIME = 60 * 60 * 1000L; // 1시간
   private static final long REFRESH_TOKEN_VALID_TIME = 60 * 60 * 24 * 14 * 1000L; // 14일

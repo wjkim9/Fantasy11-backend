@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>WS Test – Chat & Alerts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 20px; }
+    fieldset { border:1px solid #ddd; padding:10px; margin-bottom:12px; border-radius:8px; }
+    legend { padding: 0 6px; color:#555; }
+    input, button, textarea { padding:8px; border:1px solid #ccc; border-radius:6px; }
+    input, textarea { width:100%; box-sizing: border-box; }
+    button { cursor:pointer; }
+    .row { display:flex; gap:10px; }
+    .row > div { flex: 1; }
+    #log { height: 240px; overflow:auto; background:#0b1020; color:#d6deff; padding:10px; border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .tag { display:inline-block; padding:2px 6px; border-radius:6px; font-size:12px; margin-right:6px; }
+    .ok { background:#e6ffed; color:#0a5; }
+    .err { background:#ffecec; color:#c00; }
+    .msg { background:#eef; color:#225; }
+    .alert { background:#fff6e6; color:#b55; }
+  </style>
+  <!-- STOMP over WebSocket (native). SockJS 불필요 -->
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<h2>Chat & Alert Test</h2>
+
+<fieldset>
+  <legend>1) 서버/자격</legend>
+  <div class="row">
+    <div>
+      <label>Base URL (백엔드)</label>
+      <input id="baseUrl" value="http://localhost:8080" />
+    </div>
+    <div>
+      <label>WS URL</label>
+      <input id="wsUrl" value="ws://localhost:8080/ws" />
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <div>
+      <label>JWT Access Token (ROLE_USER)</label>
+      <input id="token" placeholder="Bearer 없이 토큰만" />
+    </div>
+    <div style="align-self:flex-end;">
+      <button id="btnConnect">CONNECT</button>
+      <button id="btnDisconnect">DISCONNECT</button>
+    </div>
+  </div>
+  <small>※ 정상 로그인 후 프론트 리다이렉트에서 받은 <b>accessToken</b>을 붙여 넣으세요. 구독/발신 권한 체크가 동작합니다.</small>
+</fieldset>
+
+<fieldset>
+  <legend>2) 채팅</legend>
+  <div class="row">
+    <div>
+      <label>Room ID (UUID)</label>
+      <input id="roomId" placeholder="채팅방 UUID" />
+    </div>
+    <div style="align-self:flex-end;">
+      <button id="btnSubscribe">SUBSCRIBE</button>
+      <button id="btnUnsub">UNSUBSCRIBE</button>
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <div>
+      <label>Message</label>
+      <input id="chatText" placeholder="메시지 내용" />
+    </div>
+    <div style="align-self:flex-end;">
+      <button id="btnSend">SEND</button>
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <div>
+      <button id="btnRecent">최근 메시지 20개</button>
+    </div>
+    <div>
+      <input id="searchQ" placeholder="검색어 (예: 골)" />
+    </div>
+    <div>
+      <button id="btnSearch">검색</button>
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>3) 알림(수동 트리거)</legend>
+  <div class="row">
+    <div><label>Player ID (UUID)</label><input id="playerId" /></div>
+    <div><label>Fixture ID (UUID)</label><input id="fixtureId" /></div>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <div><label>Event Type</label><input id="eventType" value="goals_scored" /></div>
+    <div><label>Minute</label><input id="minute" type="number" value="62" /></div>
+    <div><label>Point</label><input id="point" type="number" value="4" /></div>
+  </div>
+  <div style="margin-top:8px;">
+    <button id="btnAlert">/api/notify/raw 호출</button>
+    <small>라우팅은 playerId+fixtureId로 계산됩니다.</small>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>Log</legend>
+  <div id="log"></div>
+</fieldset>
+
+<script>
+  let client;
+  let sub;
+  const $ = (id)=>document.getElementById(id);
+  const log = (t, cls="")=>{
+    const el = document.createElement('div');
+    if (cls) el.innerHTML = `<span class="tag ${cls}">${cls.toUpperCase()}</span> ${t}`;
+    else el.textContent = t;
+    $("log").appendChild(el);
+    $("log").scrollTop = $("log").scrollHeight;
+  };
+
+  // CONNECT
+  $("btnConnect").onclick = ()=>{
+    if (!window.StompJs) { log("STOMP library not loaded", "err"); return; }
+    const wsUrl = $("wsUrl").value.trim();
+    const token = $("token").value.trim();
+    if (!token) { alert("JWT 토큰을 넣어주세요"); return; }
+
+    client = new StompJs.Client({
+      brokerURL: wsUrl,
+      connectHeaders: { Authorization: "Bearer " + token },
+      debug: (str)=>console.debug(str),
+      reconnectDelay: 3000,
+      onConnect: () => { log("STOMP connected", "ok"); },
+      onStompError: (f) => { log("STOMP error: "+ f.headers['message'], "err"); }
+    });
+    client.activate();
+  };
+
+  $("btnDisconnect").onclick = ()=>{
+    if (sub) { sub.unsubscribe(); sub = null; }
+    if (client) { client.deactivate(); log("STOMP disconnected","ok"); }
+  };
+
+  // SUBSCRIBE
+  $("btnSubscribe").onclick = ()=>{
+    if (!client || !client.active) { alert("먼저 CONNECT 하세요"); return; }
+    const roomId = $("roomId").value.trim();
+    if (!roomId) { alert("roomId 필요"); return; }
+    const dest = `/topic/chat/${roomId}`;
+    sub = client.subscribe(dest, (msg)=>{
+      try {
+        const body = JSON.parse(msg.body);
+        const tag = body.type === "ALERT" ? "alert" : "msg";
+        log(`[${body.type}] ${body.content} (${body.createdAt})`, tag);
+      } catch(e) { log("recv: "+msg.body, "msg"); }
+    });
+    log(`subscribed ${dest}`, "ok");
+  };
+
+  $("btnUnsub").onclick = ()=>{
+    if (sub) { sub.unsubscribe(); sub = null; log("unsubscribed","ok"); }
+  };
+
+  // SEND
+  $("btnSend").onclick = ()=>{
+    if (!client || !client.active) { alert("먼저 CONNECT"); return; }
+    const roomId = $("roomId").value.trim();
+    const text = $("chatText").value.trim();
+    if (!roomId || !text) { alert("roomId / message 필요"); return; }
+    const dest = `/app/chat/${roomId}/send`;
+    client.publish({ destination: dest, body: JSON.stringify({ content: text }) });
+    log(`send -> ${text}`, "ok");
+  };
+
+  // 최근 메시지
+  $("btnRecent").onclick = async ()=>{
+    const base = $("baseUrl").value.trim();
+    const roomId = $("roomId").value.trim();
+    if (!roomId) { alert("roomId 필요"); return; }
+    try {
+      const r = await fetch(`${base}/api/chat-rooms/${roomId}/messages?limit=20`);
+      if (r.status === 204) { log(`search '${q}' count=0`, "ok"); return; }
+      const j = await r.json();
+      log(`recent count=${j.items?.length ?? 0}`, "ok");
+      (j.items||[]).forEach(m=>{
+        const tag = m.type === "ALERT" ? "alert" : "msg";
+        log(`[HIST ${m.type}] ${m.content} (${m.createdAt})`, tag);
+      });
+    } catch(e) { log("recent error: "+e, "err"); }
+  };
+
+  // 검색
+  $("btnSearch").onclick = async ()=>{
+    const base = $("baseUrl").value.trim();
+    const roomId = $("roomId").value.trim();
+    const q = $("searchQ").value.trim();
+    if (!roomId || !q) { alert("roomId / q 필요"); return; }
+    try {
+      const r = await fetch(`${base}/api/chat-rooms/${roomId}/search?q=${encodeURIComponent(q)}&limit=20`);
+      const j = await r.json();
+      log(`search '${q}' count=${j.items?.length ?? 0}`, "ok");
+      (j.items||[]).forEach(m=>{
+        const tag = m.type === "ALERT" ? "alert" : "msg";
+        log(`[SRCH ${m.type}] ${m.content} (${m.createdAt})`, tag);
+      });
+    } catch(e) { log("search error: "+e, "err"); }
+  };
+
+  // 알림 트리거
+  $("btnAlert").onclick = async ()=>{
+    const base = $("baseUrl").value.trim();
+    const body = {
+      playerId: $("playerId").value.trim(),
+      fixtureId: $("fixtureId").value.trim(),
+      eventType: $("eventType").value.trim(),
+      minute: Number($("minute").value || 0),
+      point: Number($("point").value || 0),
+      text: ""
+    };
+    try {
+      const r = await fetch(`${base}/api/notify/raw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error(await r.text());
+      log("alert dispatched", "ok");
+    } catch(e) { log("alert error: "+e, "err"); }
+  };
+
+  window.onerror = (msg, url, line, col, err) => {
+    const el = document.createElement('div');
+    el.innerHTML = `<span class="tag err">ERR</span> ${msg}`;
+    document.getElementById('log').appendChild(el);
+  };
+</script>
+</body>
+</html>

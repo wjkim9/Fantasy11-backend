@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.kafka.common.protocol.types.Field;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;

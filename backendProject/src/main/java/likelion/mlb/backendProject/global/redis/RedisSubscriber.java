@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RedisSubscriber implements MessageListener {
 
+    @Lazy
     private final SimpMessagingTemplate simpMessagingTemplate;
 
     private final ObjectMapper objectMapper;

@@ -85,7 +85,6 @@ public class DraftTimingService {
 
         // 정책: 경기일(KST) 기준 2일 전이 draftDay
         LocalDate draftDay = startedAtKst.toLocalDate().minusDays(2);
-
         LocalDateTime openAt = LocalDateTime.of(draftDay, OPEN_TIME);
         LocalDateTime lockAt = LocalDateTime.of(draftDay, LOCK_TIME);
 

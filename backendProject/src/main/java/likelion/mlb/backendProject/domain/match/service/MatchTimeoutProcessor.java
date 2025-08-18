@@ -90,8 +90,8 @@ public class MatchTimeoutProcessor {
             draft.setDeleted(false);
             draftRepository.save(draft);
 
-            // 필요 시 채팅방 생성(멀티 트랜잭션 고려 시 내부에서 별도 보호)
-            chatRoomService.createRoom(draft.getId());
+            // 채팅방 생성로직 - 재혁
+            chatRoomService.createForDraft(draft.getId());
 
             short userNumber = 1;
             List<Participant> participants = new ArrayList<>(4);
