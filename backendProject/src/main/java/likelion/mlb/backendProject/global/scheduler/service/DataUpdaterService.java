@@ -55,6 +55,15 @@ public class DataUpdaterService {
         // 1) bootstrap-static 재조회: teams / elements(선수) / events / element_types
         var bs = fpl.getBootstrapStatic();
 
+        // 현재 진행중인 라운드 정보 가져옴
+        Round currentRound = getCurrentRound();
+
+        // 해당 라운드의 경기 정보를 API를 통해 받아옴
+        LiveEventDto liveData = fetchLiveData(currentRound);
+        List<FplFixture> fixtures = fpl.getFixtures(currentRound.getRound());
+
+
+
         Map<Integer, ElementType> typeMap = elementTypeRepository.findAll().stream()
                 .collect(Collectors.toMap(ElementType::getFplId, Function.identity()));
         Map<Integer, Team> teamMap = teamRepository.findAll().stream()
@@ -68,6 +77,8 @@ public class DataUpdaterService {
 
         // 4) 경기시간 변동 반영
         updateRoundAndFixture(bs.getEvents(), teamMap);
+
+        processPlayerEvents(liveData, fixtures);
 
     }
 
@@ -226,11 +237,21 @@ public class DataUpdaterService {
 
 
     /**
-     * 여기서부턴 각 경기 선수의 보너스 점수를 위한 메소드
-     * @param liveData
-     * @param fixtures
+     * 여기서부턴 각 경기 선수의 보너스 점수를 위한 메소드 + in_dreamteam
+     * @param
+     * @param
      * @return
      */
+    private Round getCurrentRound() {
+        return roundRepository.findByIsCurrentTrue()
+                .orElseThrow(() -> new RuntimeException("현재 진행중인 라운드가 없습니다."));
+    }
+
+    private LiveEventDto fetchLiveData(Round currentRound) {
+        return fpl.getLive(currentRound.getRound());
+    }
+
+
     private int processPlayerEvents(LiveEventDto liveData, List<FplFixture> fixtures) {
         if (liveData.getElements() == null || liveData.getElements().isEmpty()) {
             log.info("처리할 선수 데이터가 없습니다.");
