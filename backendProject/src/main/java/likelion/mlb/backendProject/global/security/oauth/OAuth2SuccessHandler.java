@@ -8,10 +8,12 @@ import java.io.IOException;
 import likelion.mlb.backendProject.domain.user.service.RefreshTokenService;
 import likelion.mlb.backendProject.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -19,6 +21,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final RefreshTokenService refreshTokenService;
+
+  @Value("${frontend.https.url}")
+  private String frontendUrl;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request,
@@ -42,7 +47,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     response.addCookie(refreshTokenCookie);
 
     // 액세스 토큰은 URL 파라미터로 전달
-    String targetUrl = "http://localhost:5173/auth/callback?accessToken=" + accessToken;
+    String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+        .path("/auth/callback")
+        .queryParam("accessToken", accessToken)
+        .build().toUriString();
     response.sendRedirect(targetUrl);
   }
 }

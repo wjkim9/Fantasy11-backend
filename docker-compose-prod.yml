@@ -77,7 +77,7 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.security.transport.ssl.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g   # 로컬 자원에 맞춰 조절
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -92,44 +92,6 @@ services:
     networks:
       - backend
 
-  # Zookeeper (for Kafka)
-  mlb-zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.1
-    container_name: mlb-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/2181'"]
-      interval: 10s
-      timeout: 3s
-      retries: 30
-    networks:
-      - backend
-
-  # Kafka
-  mlb-kafka:
-    image: confluentinc/cp-kafka:7.4.1
-    container_name: mlb-kafka
-    depends_on:
-      - mlb-zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: mlb-zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://mlb-kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/9092'"]
-      interval: 10s
-      timeout: 3s
-      retries: 30
-    networks:
-      - backend
 
 volumes:
   es_data:
