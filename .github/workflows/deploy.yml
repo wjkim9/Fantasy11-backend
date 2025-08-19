@@ -18,18 +18,14 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
 
       # 3) Gradle 빌드 (테스트 생략 예시)
       - name: Build Spring Boot
         run: ./gradlew clean build -x test
 
-      # 4) EC2로 파일 전송
-      #    - compose 파일: docker-compose-prod.yml
-      #    - backendProject 폴더 안의 Dockerfile
-      #    - CI에서 생성한 JAR (backendProject/build/libs/*.jar)
-      #    - (있다면) .env
+      # 4) EC2로 파일 전송 (단, .env 제외)
       - name: Upload artifacts to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -40,7 +36,6 @@ jobs:
             docker-compose-prod.yml
             backendProject/Dockerfile
             backendProject/build/libs/*.jar
-            .env
           target: ${{ secrets.EC2_APP_DIR }}
 
       # 5) EC2에서 배포 (Amazon Linux)
@@ -55,6 +50,11 @@ jobs:
             APP_DIR="${{ secrets.EC2_APP_DIR }}"
             cd "$APP_DIR"
 
+            # ---- 여기서 .env 파일 생성 ----
+            cat << 'EOF' > .env
+            ${{ secrets.EC2_ENV_FILE }}
+            EOF
+
             # Docker/compose 설치(없을 때)
             if ! command -v docker >/dev/null 2>&1; then
               if command -v dnf >/dev/null 2>&1; then
@@ -66,7 +66,7 @@ jobs:
               fi
               sudo systemctl enable docker
               sudo systemctl start docker
-              sudo usermod -aG docker $USER || true
+              sudo usermod -aG docker ec2-user || true
             fi
             if ! docker compose version >/dev/null 2>&1; then
               if command -v dnf >/dev/null 2>&1; then
