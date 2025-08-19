@@ -113,6 +113,10 @@ public class PlayerFixtureStat {
             this.totalPoints = element.getStats().getTotalPoints();
             hasChanges = true;
         }
+        if(this.inDreamteam != element.getStats().isInDreamteam()) {
+            this.inDreamteam = element.getStats().isInDreamteam();
+            hasChanges = true;
+        }
 
         return hasChanges;
     }
