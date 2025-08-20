@@ -2,7 +2,9 @@ package likelion.mlb.backendProject.global.scheduler.service;
 
 import likelion.mlb.backendProject.domain.player.entity.ElementType;
 import likelion.mlb.backendProject.domain.player.entity.Player;
+import likelion.mlb.backendProject.domain.player.entity.live.PlayerFixtureStat;
 import likelion.mlb.backendProject.domain.player.repository.ElementTypeRepository;
+import likelion.mlb.backendProject.domain.player.repository.PlayerFixtureStatRepository;
 import likelion.mlb.backendProject.domain.player.repository.PlayerRepository;
 import likelion.mlb.backendProject.domain.round.entity.Fixture;
 import likelion.mlb.backendProject.domain.round.entity.Round;
@@ -16,6 +18,9 @@ import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplElement;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplEvent;
 import likelion.mlb.backendProject.global.staticdata.dto.bootstrap.FplTeam;
 import likelion.mlb.backendProject.global.staticdata.dto.fixture.FplFixture;
+import likelion.mlb.backendProject.global.staticdata.dto.live.LiveElementDto;
+import likelion.mlb.backendProject.global.staticdata.dto.live.LiveEventDto;
+import likelion.mlb.backendProject.global.staticdata.dto.live.element.ExplainDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,12 +46,23 @@ public class DataUpdaterService {
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
     private final ElementTypeRepository elementTypeRepository;
+    private final PlayerFixtureStatRepository playerFixtureStatRepository;
+
 
     public void fullRefresh() {
 
 
         // 1) bootstrap-static 재조회: teams / elements(선수) / events / element_types
         var bs = fpl.getBootstrapStatic();
+
+        // 현재 진행중인 라운드 정보 가져옴
+        Round currentRound = getCurrentRound();
+
+        // 해당 라운드의 경기 정보를 API를 통해 받아옴
+        LiveEventDto liveData = fetchLiveData(currentRound);
+        List<FplFixture> fixtures = fpl.getFixtures(currentRound.getRound());
+
+
 
         Map<Integer, ElementType> typeMap = elementTypeRepository.findAll().stream()
                 .collect(Collectors.toMap(ElementType::getFplId, Function.identity()));
@@ -61,6 +77,8 @@ public class DataUpdaterService {
 
         // 4) 경기시간 변동 반영
         updateRoundAndFixture(bs.getEvents(), teamMap);
+
+        processPlayerEvents(liveData, fixtures);
 
     }
 
@@ -100,24 +118,24 @@ public class DataUpdaterService {
                               Map<Integer, Team> teamMap) {
 
         // 1) DTO 에서 모든 코드 수집
-        List<Integer> allCodes = elements.stream()
-                .map(FplElement::getCode)
+        List<Integer> allFplIds = elements.stream()
+                .map(FplElement::getFplId)
                 .toList();
 
         // 2) 한 번에 DB 조회: 기존 선수들만
-        List<Player> existingPlayers = playerRepository.findAllByCodeIn(allCodes);
+        List<Player> existingPlayers = playerRepository.findAllByFplIdIn(allFplIds);
         Map<Integer, Player> existingMap = existingPlayers.stream()
-                .collect(Collectors.toMap(Player::getCode, Function.identity()));
+                .collect(Collectors.toMap(Player::getFplId, Function.identity()));
 
         // 3) 삭제 처리 (DB에 남아있으나 allCodes 에 없는 선수들)
-        playerRepository.markDeletedByCodeNotIn(allCodes);
+        playerRepository.markDeletedByFplIdNotIn(allFplIds);
 
         // 4) 새로 추가할 선수들 모아두기
         List<Player> toInsert = new ArrayList<>();
 
         // 5) DTO 순회하면서 in-memory upsert
         for (FplElement dto : elements) {
-            Player existing = existingMap.get(dto.getCode());
+            Player existing = existingMap.get(dto.getFplId());
             if (existing != null) {
                 // 기존 선수면 필드만 업데이트 (dirty-checking 으로 커밋 시점에 UPDATE)
                 existing.updatePlayer(dto, typeMap, teamMap);
@@ -215,6 +233,106 @@ public class DataUpdaterService {
             // 4) 필드 세팅
             round.setRoundTime(earliest, latest);
         }
+    }
+
+
+    /**
+     * 여기서부턴 각 경기 선수의 보너스 점수를 위한 메소드 + in_dreamteam
+     * @param
+     * @param
+     * @return
+     */
+    private Round getCurrentRound() {
+        return roundRepository.findByIsCurrentTrue()
+                .orElseThrow(() -> new RuntimeException("현재 진행중인 라운드가 없습니다."));
+    }
+
+    private LiveEventDto fetchLiveData(Round currentRound) {
+        return fpl.getLive(currentRound.getRound());
+    }
+
+
+    private int processPlayerEvents(LiveEventDto liveData, List<FplFixture> fixtures) {
+        if (liveData.getElements() == null || liveData.getElements().isEmpty()) {
+            log.info("처리할 선수 데이터가 없습니다.");
+            return 0;
+        }
+
+        // 진행중인 경기 필터링
+        List<Integer> finishFixtureIds = getFinishFixtureIds(fixtures);
+        if (finishFixtureIds.isEmpty()) {
+            log.info("진행중인 경기가 없습니다.");
+            return 0;
+        }
+
+        // 필요한 데이터 배치 조회
+        Map<Integer, Player> playerMap = getPlayerMap(liveData);
+        Map<String, PlayerFixtureStat> existingStats = getExistingStats(finishFixtureIds);
+
+        int updatedCount = 0;
+
+        // 각 선수별로 스탯 처리
+        for (LiveElementDto element : liveData.getElements()) {
+            Player player = playerMap.get(element.getPlayerId());
+            if (player == null) {
+                log.warn("매핑된 Player가 없습니다. fplId={}", element.getPlayerId());
+                continue;
+            }
+
+            // 각 경기별로 선수 스탯 처리
+            for (ExplainDto explainItem : element.getExplain()) {
+                if (!finishFixtureIds.contains(explainItem.getFixture())) {
+                    continue; // 진행중인 경기만 처리
+                }
+
+                String statKey = player.getFplId() + "_" + explainItem.getFixture();
+                PlayerFixtureStat existingStat = existingStats.get(statKey);
+
+                if (existingStat != null) {
+                    // 기존 스탯 업데이트
+                    if (updatePlayerFixtureStat(existingStat, element)) {
+                        updatedCount++;
+                    }
+                }
+            }
+        }
+
+        return updatedCount;
+    }
+
+    private List<Integer> getFinishFixtureIds(List<FplFixture> liveData) {
+        return liveData.stream()
+                .filter(fixture -> fixture.isStarted() && fixture.isFinished())
+                .map(FplFixture::getFplId)
+                .toList();
+    }
+
+    private Map<Integer, Player> getPlayerMap(LiveEventDto liveData) {
+        List<Integer> playerFplIds = liveData.getElements().stream()
+                .map(LiveElementDto::getPlayerId)
+                .toList();
+        return playerRepository.findAllByFplIdInAsMap(playerFplIds);
+    }
+
+    private Map<String, PlayerFixtureStat> getExistingStats(List<Integer> activeFixtureIds) {
+        return playerFixtureStatRepository.findByFixtureFplIds(activeFixtureIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        stat -> stat.getPlayer().getFplId() + "_" + stat.getFixture().getFplId(),
+                        stat -> stat
+                ));
+    }
+
+    private boolean updatePlayerFixtureStat(PlayerFixtureStat stat, LiveElementDto element) {
+
+        boolean hasChanges = stat.updatePlayerFixtureStat(element);
+
+        if (hasChanges) {
+            log.debug("PlayerFixtureStat 업데이트: playerId={}, fixtureId={}, points={}",
+                    stat.getPlayer().getFplId(), stat.getFixture().getFplId(), stat.getTotalPoints());
+        }
+
+        return hasChanges;
     }
 
 }

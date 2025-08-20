@@ -52,9 +52,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 
-	/* Kafka */
-	implementation 'org.springframework.kafka:spring-kafka'
-
 	/* ElasticSearch */
 	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 	//implementation 'co.elastic.clients:elasticsearch-java:8.13.0'
@@ -77,7 +74,9 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	//스케줄 락을 위한 의존성 추가
-	implementation 'net.javacrumbs.shedlock:shedlock-spring:4.44.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:5.10.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.10.0'
+
 
 	//테스트 코드를 위한 임시 db
 	testImplementation("com.h2database:h2")

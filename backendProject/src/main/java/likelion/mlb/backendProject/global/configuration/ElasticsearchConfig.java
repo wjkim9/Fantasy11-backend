@@ -1,28 +1,27 @@
 package likelion.mlb.backendProject.global.configuration;
 
-import jakarta.annotation.PostConstruct;
-import likelion.mlb.backendProject.domain.chat.elasticsearch.ChatMessageDocument;
-import lombok.RequiredArgsConstructor;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.IndexOperations;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 
 @Configuration
-@RequiredArgsConstructor
 public class ElasticsearchConfig {
 
+  @Bean
+  public RestClient restClient() {
+    return RestClient.builder(HttpHost.create("http://localhost:9200")).build();
+  }
 
-  private final ElasticsearchOperations esOps;
-
-
-  @PostConstruct
-  public void createChatIndex() {
-    IndexOperations ops = esOps.indexOps(IndexCoordinates.of("chat-messages"));
-    if (!ops.exists()) {
-
-      ops.create();
-      ops.putMapping(ChatMessageDocument.class);
-    }
+  @Bean
+  public ElasticsearchClient elasticsearchClient(RestClient restClient, ObjectMapper springMapper) {
+    var mapper = new JacksonJsonpMapper(springMapper);
+    var transport = new RestClientTransport(restClient, mapper);
+    return new ElasticsearchClient(transport);
   }
 }
+

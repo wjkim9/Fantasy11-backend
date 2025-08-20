@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.domain.player.entity.Player;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +14,8 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ParticipantPlayer {
 
     @Id
@@ -38,15 +38,17 @@ public class ParticipantPlayer {
         return players.stream().map(p -> DraftResponse.builder()
                 .participantId(p.getParticipant().getId())
                 .playerId(p.getPlayer().getId())
-                .PlayerWebName(p.getPlayer().getWebName())
-                .PlayerKrName(p.getPlayer().getKrName())
-                .PlayerPic(p.getPlayer().getPic())
+                .playerWebName(p.getPlayer().getWebName())
+                .playerKrName(p.getPlayer().getKrName())
+                .playerPic(p.getPlayer().getPic())
 
                 // team관련 설정
+                .teamId(p.getPlayer().getTeam().getId())
                 .teamName(p.getPlayer().getTeam().getName())
                 .teamKrName(p.getPlayer().getTeam().getKrName())
 
                 // 포지션(elementType) 관련 설정
+                .elementTypeId(p.getPlayer().getElementType().getId())
                 .elementTypePluralName(p.getPlayer().getElementType().getPluralName())
                 .elementTypeKrName(p.getPlayer().getElementType().getKrName())
                 .build()

@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.domain.draft.repository;
 
+import java.util.List;
 import likelion.mlb.backendProject.domain.draft.entity.ParticipantPlayer;
 
 import likelion.mlb.backendProject.domain.match.entity.Participant;
@@ -13,6 +14,10 @@ import java.util.*;
 
 @Repository
 public interface ParticipantPlayerRepository extends JpaRepository<ParticipantPlayer, UUID> {
+
+  @Query("select distinct p.draft.id from ParticipantPlayer pp join pp.participant p join p.draft d where pp.player.id = :playerId and d.round.id = :roundId")
+  List<UUID> findDraftIdsByPlayerAndRound(@Param("playerId") UUID playerId, @Param("roundId") UUID roundId);
+
     // 특정 드래프트 방에서 특정 선수가 이미 선택 되었는 지 체크
     boolean existsByParticipant_Draft_IdAndPlayer_Id(UUID draftId, UUID playerId);
 
@@ -34,4 +39,29 @@ public interface ParticipantPlayerRepository extends JpaRepository<ParticipantPl
     """)
     List<Object[]> sumPointsByParticipant(@Param("round") Round round,
                                           @Param("participants") List<Participant> participants);
+
+    /*
+    * 한 참가자가 선수를 드래프트 했을 시 포지션 별 최대/최소 값 유지하는 지 확인
+    * */
+    @Query("""
+        SELECT CASE
+            WHEN ((SELECT COUNT(pp)
+                   FROM Player p
+                   LEFT JOIN ParticipantPlayer pp
+                     ON pp.player = p
+                     AND pp.participant.id = :participantId
+                   WHERE p.elementType.id = :elementTypeId) + 1) <= et.squadMaxPlay
+            THEN true
+            ELSE false
+        END
+        FROM ElementType et
+        WHERE et.id = :elementTypeId
+    """)
+    Boolean isWithinSquadLimits(
+            @Param("participantId") UUID participantId,
+            @Param("elementTypeId") UUID elementTypeId
+    );
+
+    // draftId로 ParticipantPlayer 전부 가져오기
+    List<ParticipantPlayer> findByParticipant_Draft_Id(UUID draftId);
 }

@@ -2,6 +2,7 @@ package likelion.mlb.backendProject.domain.draft.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import likelion.mlb.backendProject.domain.draft.dto.DraftParticipant;
 import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.draft.service.DraftService;
@@ -12,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.*;
@@ -52,8 +51,38 @@ public class DraftController {
     /*
     * 참여자(participant)클릭 시 해당 참여자가 선택한 선수 리스트 가져오기
     * */
-    @GetMapping("/players/{participantId}")
+    @GetMapping("/{participantId}/players")
+    @ResponseBody
     public List<DraftResponse> getPlayersByParticipantId(@PathVariable("participantId") UUID participantId) {
         return draftService.getPlayersByParticipantId(participantId);
+    }
+
+
+    /*
+     * 드래프트 방 입장 시 해당 드래프트 방에 속해 있는 4명의 참여자 리스트 가져오기
+     */
+    @GetMapping("/{draftId}/participants")
+    @ResponseBody
+    public List<DraftParticipant> getParticipantsByDraftId(@PathVariable("draftId") UUID draftId) {
+        return draftService.getParticipantsByDraftId(draftId);
+    }
+
+    /*
+     * 해당 드래프트 방에서 선택 된 선수 리스트 가져오기
+     */
+    @GetMapping("/{draftId}/allPlayers")
+    @ResponseBody
+    public List<DraftResponse> getAllPlayersByDraftId(@PathVariable("draftId") UUID draftId) {
+        return draftService.getAllPlayersByDraftId(draftId);
+    }
+
+    /*
+     * isWithinSquadLimits테스트용
+     */
+    @GetMapping("squadLimit")
+    @ResponseBody
+    public boolean isWithinSquadLimits(@RequestParam(value="participantId") UUID participantId,
+                                                      @RequestParam(value="participantId")UUID elementTypeId) {
+        return draftService.isWithinSquadLimitsTest(participantId, elementTypeId);
     }
 }

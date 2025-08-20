@@ -1,28 +1,14 @@
 package likelion.mlb.backendProject.domain.chat.entity;
 
 import jakarta.persistence.*;
-import likelion.mlb.backendProject.domain.user.entity.User;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "chat_message")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ChatMessage {
-
-    public enum MessageType {
-        USER, SYSTEM, ALERT
-    }
 
     @Id
     @Column(name = "id", nullable = false)
@@ -32,17 +18,23 @@ public class ChatMessage {
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "messagetype", nullable = false)
-    private MessageType messageType;
+    @Column(name = "message_type", nullable = false)
+    private MessageType messageType; // USER | SYSTEM | ALERT
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "user_id") // 시스템/봇 메시지는 NULL
+    private UUID userId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "chatroom_id", nullable = false)
-    private ChatRoom chatRoom;
+    @Column(name = "chat_room_id", nullable = false)
+    private UUID chatRoomId;
+
+    @PrePersist
+    void prePersist() {
+        if (id == null) id = UUID.randomUUID();
+        if (createdAt == null) createdAt = Instant.now();
+    }
+
+    public enum MessageType { USER, SYSTEM, ALERT }
 }

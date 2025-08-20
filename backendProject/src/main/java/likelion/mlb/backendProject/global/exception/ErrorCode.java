@@ -33,6 +33,8 @@ public enum ErrorCode {
   CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHATROOM_NOT_FOUND", "채팅방을 찾을 수 없습니다."),
   DRAFT_NOT_FOUND(HttpStatus.NOT_FOUND, "DRAFT_NOT_FOUND", "드래프트방을 찾을 수 없습니다."),
   PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND, "PARTICIPANT_NOT_FOUND", "참가자를 찾을 수 없습니다."),
+  CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_MESSAGE_NOT_FOUND", "채팅방을 찾을 수 없습니다."),
+  CHAT_SEARCH_NO_NEXT_HIT(HttpStatus.NOT_FOUND, "CHAT_SEARCH_NO_NEXT_HIT", "다음 검색 결과가 없습니다."),
 
   /* 500 - Internal Server Error */
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버에 오류가 발생했습니다.");

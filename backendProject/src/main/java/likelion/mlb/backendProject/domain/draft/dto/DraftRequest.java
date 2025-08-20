@@ -18,15 +18,17 @@ public class DraftRequest {
 
     private UUID playerId; // player pk값
 
-    private String PlayerWebName; // player 영어 이름
+    private String playerWebName; // player 영어 이름
 
-    private String PlayerKrName; // player 한글 이름
+    private String playerKrName; // player 한글 이름
 
-    private String PlayerPic; // player 사진
+    private String playerPic; // player 사진
 
     private String teamName; // 소속팀 영어명
 
     private String teamKrName; // 소속팀 한글명
+
+    private UUID elementTypeId; // 포지션 pk값
 
     private String elementTypePluralName; // 포지션 영어명
 
@@ -34,5 +36,8 @@ public class DraftRequest {
 
     // 선택한 선수가 이미 선택 되었는 지 여부
     private boolean alreadySelected = false;
+
+    // 한 참가자가 선수를 드래프트 했을 시 포지션 별 최대/최소 값 유지하는 지 여부
+    private boolean isWithinSquadLimits = true;
 
 }

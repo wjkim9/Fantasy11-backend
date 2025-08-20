@@ -151,7 +151,7 @@
 
 
                     //일반채팅
-                    stompClient.subscribe(`/topic/draft.a1c2d3e4-f5b6-4789-9abc-1234567890ab`, function (chat) {
+                    stompClient.subscribe(`/topic/draft/a1c2d3e4-f5b6-4789-9abc-1234567890ab`, function (chat) {
                         const message = JSON.parse(chat.body);
                         showMessage(message.participantId, message.playerId);
                     });

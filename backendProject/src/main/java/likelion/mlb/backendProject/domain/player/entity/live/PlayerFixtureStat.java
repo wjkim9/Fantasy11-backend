@@ -37,7 +37,11 @@ public class PlayerFixtureStat {
     private Integer redCards;
     private Integer saves;
     private Integer bonus;
-    private Boolean inDreamteam;
+
+    @Builder.Default
+    @Column(name = "in_dreamteam", nullable = false)
+    private boolean inDreamteam = false;  // 기본 false, primitive라 null 불가
+
     private Integer totalPoints;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -107,6 +111,10 @@ public class PlayerFixtureStat {
         }
         if (this.totalPoints != element.getStats().getTotalPoints()) {
             this.totalPoints = element.getStats().getTotalPoints();
+            hasChanges = true;
+        }
+        if(this.inDreamteam != element.getStats().isInDreamteam()) {
+            this.inDreamteam = element.getStats().isInDreamteam();
             hasChanges = true;
         }
 
