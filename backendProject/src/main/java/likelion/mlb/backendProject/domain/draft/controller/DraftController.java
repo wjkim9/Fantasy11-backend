@@ -51,6 +51,25 @@ public class DraftController {
     }
 
     /*
+     * 선수 랜덤 드래프트 웹소켓 통신
+     */
+    @MessageMapping("/draft/selectRandomPlayer")
+    public void selectRandomPlayer(@Payload DraftRequest draftRequest, Principal principal) throws JsonProcessingException {
+
+        try {
+            draftService.selectRandomPlayer(draftRequest, principal);
+        } catch (RuntimeException e) {
+            log.error(" 랜덤 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        } catch (JsonProcessingException e) {
+            log.error(" 랜덤 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        }
+    }
+
+    /*
     * 참여자(participant)클릭 시 해당 참여자가 선택한 선수 리스트 가져오기
     * */
     @GetMapping("/{participantId}/players")

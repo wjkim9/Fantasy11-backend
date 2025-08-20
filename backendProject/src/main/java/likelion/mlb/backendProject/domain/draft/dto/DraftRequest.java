@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.draft.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class DraftRequest {
 
     private UUID draftId; // 드래프트 방 pk값
