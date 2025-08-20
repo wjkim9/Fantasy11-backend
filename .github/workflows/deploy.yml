@@ -16,12 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # debug
-      - name: Check files before upload
-        run: |
-          ls -al
-          ls -al backendProject
-          ls -al backendProject/src || true
       # 2) EC2로 소스/설정 전송 (JAR 빌드 불필요)
       - name: Upload project to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -29,9 +23,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: |
-            backendProject/**
-            docker-compose-prod.yml
+          source:
+            backendProject/** docker-compose-prod.yml
           target: ${{ secrets.EC2_APP_DIR }}
 
       # 2-1) (추가) .env 파일 생성
