@@ -24,8 +24,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source:
-            backendProject/** docker-compose-prod.yml
+            backendProject/**
           target: ${{ secrets.EC2_APP_DIR }}
+          debug: true
 
       # 2-1) (추가) .env 파일 생성
       - name: Create .env on EC2
