@@ -7,11 +7,13 @@ import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.draft.service.DraftService;
 
+import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,8 +65,10 @@ public class DraftController {
      */
     @GetMapping("/{draftId}/participants")
     @ResponseBody
-    public List<DraftParticipant> getParticipantsByDraftId(@PathVariable("draftId") UUID draftId) {
-        return draftService.getParticipantsByDraftId(draftId);
+    public List<DraftParticipant> getParticipantsByDraftId(@PathVariable("draftId") UUID draftId
+    , @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userEmail = userDetails.getUser().getEmail();
+        return draftService.getParticipantsByDraftId(draftId, userEmail);
     }
 
     /*
