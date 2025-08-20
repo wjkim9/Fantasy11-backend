@@ -106,11 +106,11 @@ public class DraftService {
         return ParticipantPlayer.toDtoList(playerList);
     }
 
-    public List<DraftParticipant> getParticipantsByDraftId(UUID draftId) {
+    public List<DraftParticipant> getParticipantsByDraftId(UUID draftId, String userEmail) {
         Draft draft = draftRepository.findById(draftId)
                 .orElseThrow(() -> new IllegalStateException("Draft not found by draftId " + draftId));
 
-        return Participant.toDtoList(participantRepository.findByDraft(draft));
+        return Participant.toDtoList(participantRepository.findByDraft(draft), userEmail);
     }
 
     public List<DraftResponse> getAllPlayersByDraftId(UUID draftId) {
