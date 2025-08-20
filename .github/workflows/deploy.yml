@@ -54,29 +54,28 @@ jobs:
 
             # Docker/compose 설치 (없으면)
             if ! command -v docker >/dev/null 2>&1; then
-              if command -v dnf >/dev/null 2>&1; then
-                sudo dnf -y update
-                sudo dnf -y install docker
-              else
-                sudo yum -y update
-                sudo yum -y install docker
-              fi
-              sudo systemctl enable docker
-              sudo systemctl start docker
-              sudo usermod -aG docker ec2-user || true
+            if command -v dnf >/dev/null 2>&1; then
+            sudo dnf -y update
+            sudo dnf -y install docker
+            else
+            sudo yum -y update
+            sudo yum -y install docker
             fi
-            if ! docker compose version >/dev/null 2>&1; then
-              if command -v dnf >/dev/null 2>&1; then
-                sudo dnf -y install docker-compose-plugin
-              else
-                sudo yum -y install docker-compose-plugin || true
-              fi
+            sudo systemctl enable docker
+            sudo systemctl start docker
+            sudo usermod -aG docker ec2-user || true
             fi
-
+            
+            # docker-compose 직접 설치 (v2 최신 안정화 버전)
+            if ! command -v docker-compose >/dev/null 2>&1; then
+            sudo curl -SL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            fi
+            
             # 기존 컨테이너 중지 후 재빌드/재기동
-            sudo docker compose -f docker-compose-prod.yml down || true
-            sudo docker compose -f docker-compose-prod.yml build --no-cache
-            sudo docker compose -f docker-compose-prod.yml up -d
+            sudo docker-compose -f docker-compose-prod.yml down || true
+            sudo docker-compose -f docker-compose-prod.yml build --no-cache
+            sudo docker-compose -f docker-compose-prod.yml up -d
 
             # (옵션) 안 쓰는 이미지 정리
             sudo docker image prune -f
