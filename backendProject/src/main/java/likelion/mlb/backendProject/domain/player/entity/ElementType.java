@@ -71,6 +71,8 @@ public class ElementType {
                 .fplId(e.getFplId()) // fpl의 각 포지션별 id
                 .pluralName(e.getPluralName()) //ex) Goalkeepers, Defenders, fpl에서 받아오는 영어 이름
                 .krName(e.getKrName()) // 선수 포지션 한글명
+                .squadMinPlay(e.getSquadMinPlay()) // 베스트 일레븐에서 해당 포지션을 뽑아야 하는 최소 수
+                .squadMaxPlay(e.getSquadMaxPlay()) // 베스트 일레븐에서 해당 포지션을 뽑아야 하는 최대 수
                 .build()
         ).collect(Collectors.toList());
     }

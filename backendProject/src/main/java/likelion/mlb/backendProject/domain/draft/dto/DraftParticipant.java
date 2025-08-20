@@ -28,4 +28,6 @@ public class DraftParticipant {
 
     private String userName; // 참여자명
 
+    private boolean userFlag = false; // 사용자 본인 여부
+
 }
