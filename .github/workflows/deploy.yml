@@ -87,8 +87,11 @@ jobs:
             sudo docker image prune -f
 
       # 6) (선택) CloudFront 캐시 무효화
+      - name: Set CloudFront ID as env var
+        run: echo "CF_ID=${{ secrets.CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
+
       - name: Configure AWS credentials
-        if: ${{ secrets.CF_DISTRIBUTION_ID != '' }}
+        if: env.CF_ID != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -96,8 +99,8 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Invalidate CloudFront
-        if: ${{ secrets.CF_DISTRIBUTION_ID != '' }}
+        if: env.CF_ID != ''
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id "${{ secrets.CF_DISTRIBUTION_ID }}" \
+            --distribution-id "${{ env.CF_ID }}" \
             --paths "/*"
