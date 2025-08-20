@@ -15,8 +15,6 @@ services:
         condition: service_healthy
       mlb-elasticsearch:
         condition: service_healthy
-      mlb-kafka:
-        condition: service_healthy
     networks:
       - backend
 
@@ -32,8 +30,6 @@ services:
       mlb-redis1:
         condition: service_healthy
       mlb-elasticsearch:
-        condition: service_healthy
-      mlb-kafka:
         condition: service_healthy
     networks:
       - backend
