@@ -14,7 +14,8 @@ RUN chmod +x ./gradlew \
  && ./gradlew clean build -x test --no-daemon
 
 # ---- Runtime stage (JRE 최소) ----
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
+
 WORKDIR /app
 
 # 필요 시 JVM 메모리 한도 (t3.medium 고려)
