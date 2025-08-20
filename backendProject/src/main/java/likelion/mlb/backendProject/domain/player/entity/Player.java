@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
+import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.player.cache.dto.PlayerDto;
 import likelion.mlb.backendProject.domain.team.entity.Team;
 import likelion.mlb.backendProject.global.jpa.entity.BaseTime;
@@ -173,6 +174,27 @@ public class Player extends BaseTime {
                 .elementTypeKrName(p.getElementType().getKrName())
                 .build()
         ).collect(Collectors.toList());
+    }
+
+    /**
+     * Player 엔티티 → DraftRequest 변환
+     */
+    public static DraftRequest toDraftRequest(Player player) {
+        return DraftRequest.builder()
+            .playerId(player.getId())
+            .playerWebName(player.getWebName())
+            .playerKrName(player.getKrName())
+            .playerPic(player.getPic())
+
+            // team관련 설정
+            .teamName(player.getTeam().getName())
+            .teamKrName(player.getTeam().getKrName())
+
+            // 포지션(elementType) 관련 설정
+            .elementTypeId(player.getElementType().getId())
+            .elementTypePluralName(player.getElementType().getPluralName())
+            .elementTypeKrName(player.getElementType().getKrName())
+            .build();
     }
 
 }
