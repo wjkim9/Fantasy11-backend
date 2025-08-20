@@ -3,6 +3,8 @@ name: Deploy to Amazon Linux EC2 (compose-prod)
 on:
   push:
     branches: [ main ]   # main 브랜치 푸시 시 배포
+  pull_request:
+    branches: [ main ]
   workflow_dispatch: {}
 
 jobs:
