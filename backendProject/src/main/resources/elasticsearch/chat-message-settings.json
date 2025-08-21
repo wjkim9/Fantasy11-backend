@@ -1,18 +1,23 @@
 {
-  "index.max_ngram_diff": 3,
+  "index": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "max_ngram_diff": 15
+  },
   "analysis": {
     "filter": {
-      "ngram_filter": {
-        "type": "ngram",
-        "min_gram": 2,
-        "max_gram": 5
-      }
+      "my_ngram": { "type": "ngram", "min_gram": 2, "max_gram": 15 }
     },
     "analyzer": {
-      "ngram_analyzer": {
+      "ko_index": {
         "type": "custom",
-        "tokenizer": "standard",
-        "filter": ["lowercase","ngram_filter"]
+        "tokenizer": "nori_tokenizer",
+        "filter": [ "nori_readingform", "lowercase", "my_ngram" ]
+      },
+      "ko_search": {
+        "type": "custom",
+        "tokenizer": "nori_tokenizer",
+        "filter": [ "nori_readingform", "lowercase" ]
       }
     }
   }

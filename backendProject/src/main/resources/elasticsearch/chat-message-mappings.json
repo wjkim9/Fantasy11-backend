@@ -1,9 +1,15 @@
 {
   "properties": {
-    "content": {
+    "id":         { "type": "keyword" },
+    "chatRoomId": { "type": "keyword" },
+    "userId":     { "type": "keyword", "null_value": "NULL" },
+    "type":       { "type": "keyword" },
+    "createdAt":  { "type": "date", "format": "strict_date_optional_time||epoch_millis" },
+    "content":    {
       "type": "text",
-      "analyzer": "ngram_analyzer",
-      "search_analyzer": "ngram_analyzer"
+      "analyzer": "ko_index",
+      "search_analyzer": "ko_search",
+      "term_vector": "with_positions_offsets"
     }
   }
 }
