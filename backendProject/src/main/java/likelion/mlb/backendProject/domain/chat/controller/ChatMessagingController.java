@@ -55,7 +55,7 @@ public class ChatMessagingController {
         "createdAt", saved.getCreatedAt().toString()
     );
 
-    messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
+
     chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
   }
 }
