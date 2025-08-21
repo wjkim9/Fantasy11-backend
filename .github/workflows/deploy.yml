@@ -25,9 +25,29 @@ jobs:
         run: ./gradlew clean build -x test
         working-directory: backendProject
 
-      # 3) JAR 파일을 backendProject/app.jar 로 이름 변경
+      # (디버그) Rename JAR 직전: 현재 위치와 산출물 확인
+      - name: Debug working dir & artifacts
+        run: |
+          set -euxo pipefail
+          echo "PWD=$(pwd)"
+          ls -al
+          echo "=== build/libs ==="
+          ls -al build/libs || true
+        working-directory: backendProject
+
+      # Rename JAR: 'plain' 제외하고 단일 JAR만 app.jar로 복사
       - name: Rename JAR
-        run: cp build/libs/*.jar app.jar
+        run: |
+          set -euo pipefail
+          # 우선순위: -plain 제거 → 가장 최신 JAR 1개 선택
+          JAR_FILE=$(ls -t build/libs/*.jar | grep -v '\-plain\.jar$' | head -n 1 || true)
+          if [ -z "${JAR_FILE:-}" ]; then
+            # 만약 -plain만 있다면 그 중 최신 1개 선택
+            JAR_FILE=$(ls -t build/libs/*.jar | head -n 1)
+          fi
+          echo "Selected JAR: $JAR_FILE"
+          cp "$JAR_FILE" app.jar
+          ls -al app.jar
         working-directory: backendProject
 
       # 4) EC2로 파일 업로드 (JAR, docker-compose-prod.yml, Dockerfile, .env)
