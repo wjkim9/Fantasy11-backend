@@ -17,13 +17,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ElasticsearchConfig {
 
-  @Value("${app.elasticsearch.url:http://localhost:9200}")
+  @Value("${spring.elasticsearch.uris:http://localhost:9200}")
   private String esUrl;
 
-  @Value("${app.elasticsearch.username:}")   // xpack.security.enabled=false면 비워둠
+  @Value("${spring.elasticsearch.username:}")   // xpack.security.enabled=false면 비워둠
   private String username;
 
-  @Value("${app.elasticsearch.password:}")
+  @Value("${spring.elasticsearch.password:}")
   private String password;
 
   @Bean(destroyMethod = "close")
