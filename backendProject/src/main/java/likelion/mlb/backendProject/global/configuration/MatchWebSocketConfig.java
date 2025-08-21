@@ -34,7 +34,7 @@ public class MatchWebSocketConfig implements WebSocketConfigurer {
      * 우선순위: application.properties(frontend.http.url) → ENV(FRONTEND_HTTP_URL) → 기본값(localhost:5173)
      * 예) 운영 배포 시 FRONTEND_HTTP_URL=https://app.example.com
      */
-    @Value("${frontend.http.url:${FRONTEND_HTTP_URL:http://localhost:5173}}")
+    @Value("${frontend.https.url:${FRONTEND_HTTPS_URL:http://localhost:5173}}")
     private String frontendHttpUrl;
 
     @Override

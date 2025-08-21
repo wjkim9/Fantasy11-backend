@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -22,8 +21,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
   private final JwtTokenProvider jwtTokenProvider;
   private final RefreshTokenService refreshTokenService;
 
-  @Value("${frontend.https.url}")
-  private String frontendUrl;
+  @Value("${frontend.https.url:${FRONTEND_HTTPS_URL:http://localhost:5173}}")
+  private String frontendHttpUrl;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request,
@@ -47,10 +46,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     response.addCookie(refreshTokenCookie);
 
     // 액세스 토큰은 URL 파라미터로 전달
-    String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
-        .path("/auth/callback")
-        .queryParam("accessToken", accessToken)
-        .build().toUriString();
+    String targetUrl =  frontendHttpUrl + "/auth/callback?accessToken=" + accessToken;
     response.sendRedirect(targetUrl);
   }
 }
