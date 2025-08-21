@@ -12,7 +12,9 @@ import likelion.mlb.backendProject.domain.draft.repository.DraftRepository;
 import likelion.mlb.backendProject.domain.draft.repository.ParticipantPlayerRepository;
 import likelion.mlb.backendProject.domain.match.entity.Participant;
 import likelion.mlb.backendProject.domain.match.repository.ParticipantRepository;
+import likelion.mlb.backendProject.domain.player.entity.ElementType;
 import likelion.mlb.backendProject.domain.player.entity.Player;
+import likelion.mlb.backendProject.domain.player.repository.ElementTypeRepository;
 import likelion.mlb.backendProject.domain.player.repository.PlayerRepository;
 import likelion.mlb.backendProject.domain.user.entity.User;
 import likelion.mlb.backendProject.domain.user.repository.UserRepository;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +48,7 @@ public class DraftService {
     private final ParticipantPlayerRepository participantPlayerRepository;
     private final UserRepository userRepository;
     private final DraftRepository draftRepository;
+    private final ElementTypeRepository elementTypeRepository;
 
 
     @Transactional
@@ -83,6 +87,52 @@ public class DraftService {
             // DB에 참여자와 뽑은 선수 정보 저장
             saveDraft(draftRequest, participant);
         }
+        redisPublisher.publish(channel, msg);
+    }
+
+    @Transactional
+    public void selectRandomPlayer(DraftRequest draftRequest
+            , java.security.Principal principal
+    ) throws JsonProcessingException {
+
+        // participant 객체 추출
+        var auth = (org.springframework.security.core.Authentication) principal;
+        var cud  = (likelion.mlb.backendProject.global.security.dto.CustomUserDetails) auth.getPrincipal();
+
+//        if (cud.getUser().getId() != null) {
+        User user = userRepository.findById(cud.getUser().getId())
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+//        }
+        Draft draft = draftRepository.findById(draftRequest.getDraftId()).orElseThrow(() -> new BaseException(ErrorCode.DRAFT_NOT_FOUND));
+        Participant participant = participantRepository.findByUserAndDraft(user, draft).orElseThrow(()
+                -> new BaseException(ErrorCode.PARTICIPANT_NOT_FOUND));
+        draftRequest.setParticipantId(participant.getId());
+
+        // 해당 참가자가 선택할 수 있는 선수 포지션 목록
+        List<ElementType> elementTypes = elementTypeRepository.findAvailableElementTypesByParticipant(participant.getId());
+
+        List<UUID> elementTypeIds = elementTypes.stream()
+                .map(ElementType::getId)
+                .collect(Collectors.toList());
+
+        Player player = playerRepository.findRandomAvailablePlayer(draft.getId(), elementTypeIds)
+                .orElseThrow(() -> new IllegalArgumentException("Random Player not found"));
+
+        DraftRequest randomDraftRequest = Player.toDraftRequest(player);
+        randomDraftRequest.setDraftId(draftRequest.getDraftId());
+        randomDraftRequest.setParticipantId(participant.getId());
+
+        String channel = null;
+        String msg = null;
+//        UUID participantId = ((StompPrincipal) principal).getParticipantId(); // 현 로그인 한 사용자 member pk
+
+        // 일반 메시지
+        channel = "draft."+randomDraftRequest.getDraftId();
+        msg = objectMapper.writeValueAsString(randomDraftRequest);
+
+        // DB에 참여자와 뽑은 선수 정보 저장
+        saveDraft(randomDraftRequest, participant);
+
         redisPublisher.publish(channel, msg);
     }
 
