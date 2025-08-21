@@ -47,10 +47,15 @@ public class PlayerCacheService {
             List<PlayerDto> playerDtoCacheList = (List<PlayerDto>) cached;
             return playerDtoCacheList;
         }
-        // 2. 캐시 미스 → DB 조회 + Redis 저장
+        // 2. 캐시 미스 → DB 조회 + Redis 저장 + Elasticsearch에도 저장
         List<Player> playerList = playerRepository.findAllWithTeamAndElementType();
         List<PlayerDto> playerDtoList = Player.toDtoList(playerList);
         redisTemplate.opsForValue().set(PLAYER_CACHE_KEY, playerDtoList, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+
+        // Elasticsearch에도 저장
+        // (기존에 elsticsearch에 데이터가 있을 시 PlayerEsDocument의 @Id비교해서 같으면 update, 다르면 insert)
+        playerEsService.saveAll(PlayerDto.toDocumentList(playerDtoList));
+
         return playerDtoList;
     }
 }
