@@ -59,9 +59,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: |
             backendProject/app.jar
-            backendProject/Dockerfile
-            docker-compose-prod.yml
-            .env
           target: ${{ secrets.EC2_APP_DIR }}
 
       # 5) EC2에서 Docker Compose 실행
