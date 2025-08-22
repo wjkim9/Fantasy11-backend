@@ -73,6 +73,7 @@ public class DraftService {
         Participant participant = participantRepository.findByUserAndDraft(user, draft).orElseThrow(()
                 -> new BaseException(ErrorCode.PARTICIPANT_NOT_FOUND));
         draftRequest.setParticipantId(participant.getId());
+        draftRequest.setUserName(user.getName());
 
 
         String channel = null;
@@ -121,6 +122,7 @@ public class DraftService {
         DraftRequest randomDraftRequest = Player.toDraftRequest(player);
         randomDraftRequest.setDraftId(draftRequest.getDraftId());
         randomDraftRequest.setParticipantId(participant.getId());
+        randomDraftRequest.setUserName(user.getName());
 
         String channel = null;
         String msg = null;

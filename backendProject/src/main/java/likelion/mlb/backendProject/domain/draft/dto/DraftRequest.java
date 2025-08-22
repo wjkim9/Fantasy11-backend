@@ -18,6 +18,8 @@ public class DraftRequest {
 
     private UUID participantId; // 드래프트 참가자 pk값
 
+    private String userName; // 참가자 이름
+
     private UUID playerId; // player pk값
 
     private String playerWebName; // player 영어 이름
