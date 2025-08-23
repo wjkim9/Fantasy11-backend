@@ -40,7 +40,7 @@ public class DraftTimingService {
     private static final ZoneId  UTC       = ZoneOffset.UTC;
     /** 드래프트 오픈/락 시각(정책 상수) — 필요 시 application.properties로 분리 가능 */
     private static final LocalTime OPEN_TIME = LocalTime.of(8, 0);
-    private static final LocalTime LOCK_TIME = LocalTime.of(17, 5);
+    private static final LocalTime LOCK_TIME = LocalTime.of(23, 5);
 
     /**
      * "현재 시각 이후" 첫 라운드의 드래프트 윈도우를 반환한다.
