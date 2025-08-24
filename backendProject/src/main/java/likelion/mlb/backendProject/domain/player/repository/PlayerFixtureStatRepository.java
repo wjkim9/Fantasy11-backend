@@ -2,6 +2,7 @@ package likelion.mlb.backendProject.domain.player.repository;
 
 import likelion.mlb.backendProject.domain.player.entity.live.PlayerFixtureStat;
 import likelion.mlb.backendProject.domain.round.entity.Fixture;
+import likelion.mlb.backendProject.domain.round.entity.Round;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,4 +30,16 @@ public interface PlayerFixtureStatRepository extends JpaRepository<PlayerFixture
     })
     List<PlayerFixtureStat> findByFixtureInAndInDreamteamTrue(
             List<Fixture> fixtures);
+    @Query("""
+  select p.id as playerId, coalesce(sum(pfs.totalPoints), 0) as pts
+  from PlayerFixtureStat pfs
+  join pfs.player p
+  join pfs.fixture f
+  where f.round = :round
+    and p.id in :playerIds
+  group by p.id
+""")
+    List<Object[]> sumPlayerPointsForRound(@Param("round") Round round,
+        @Param("playerIds") List<UUID> playerIds);
+
 }

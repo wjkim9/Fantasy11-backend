@@ -64,4 +64,45 @@ public interface ParticipantPlayerRepository extends JpaRepository<ParticipantPl
 
     // draftId로 ParticipantPlayer 전부 가져오기
     List<ParticipantPlayer> findByParticipant_Draft_Id(UUID draftId);
+
+  @Query("""
+    select pp.participant.id as participantId,
+           coalesce(sum(pfs.totalPoints), 0) as total
+    from ParticipantPlayer pp
+    left join PlayerFixtureStat pfs
+           on pfs.player = pp.player
+    left join Fixture fx on pfs.fixture = fx
+    where pp.participant in :participants
+      and fx.round = :round
+      and (fx.started = true or fx.minutes > 0)
+    group by pp.participant.id
+  """)
+  List<Object[]> sumLivePointsByParticipant(@Param("round") Round round,
+      @Param("participants") List<Participant> participants);
+
+  @Query("""
+    select pp.participant.id as participantId,
+           coalesce(sum(pfs.totalPoints), 0) as total
+    from ParticipantPlayer pp
+    left join PlayerFixtureStat pfs
+           on pfs.player = pp.player
+    left join Fixture fx on pfs.fixture = fx
+    where pp.participant in :participants
+      and fx.round = :round
+      and fx.started = true and fx.finished = true
+    group by pp.participant.id
+  """)
+  List<Object[]> sumFinishedPointsByParticipant(@Param("round") Round round,
+      @Param("participants") List<Participant> participants);
+
+  @Query("""
+  select pp
+    from ParticipantPlayer pp
+    join fetch pp.player pl
+    join fetch pl.team t
+    join fetch pl.elementType et
+   where pp.participant.id = :participantId
+""")
+  List<ParticipantPlayer> findByParticipantIdFetchAll(@Param("participantId") UUID participantId);
+
 }
