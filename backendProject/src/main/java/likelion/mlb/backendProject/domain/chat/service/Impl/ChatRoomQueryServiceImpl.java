@@ -1,7 +1,11 @@
 package likelion.mlb.backendProject.domain.chat.service.Impl;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import likelion.mlb.backendProject.domain.player.entity.Player;
+import likelion.mlb.backendProject.domain.player.repository.PlayerFixtureStatRepository;
+import likelion.mlb.backendProject.domain.team.entity.Team;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +34,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
   private final DraftRepository draftRepository;
   private final ParticipantRepository participantRepository;
   private final ParticipantPlayerRepository participantPlayerRepository;
+  private final PlayerFixtureStatRepository playerFixtureStatRepository;
 
   /** roomId → draft/participants 로딩 */
   private Loaded load(UUID roomId) {
@@ -44,106 +49,143 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     return new Loaded(draftId, draft.getRound(), participants);
   }
 
-  /** 방 스코어보드: 퍼포먼스 합계 기준 4명 랭킹 */
   @Override
+  @Transactional(readOnly = true)
   public List<ScoreboardItem> getScoreboard(UUID roomId) {
-    var loaded = load(roomId);
+    ChatRoom room = chatRoomRepository.findById(roomId)
+        .orElseThrow(() -> new IllegalArgumentException("room not found: " + roomId));
 
-    Map<UUID, Participant> pMap = loaded.participants.stream()
-        .collect(Collectors.toMap(Participant::getId, p -> p));
+    // draft + round + participants 로드 (fetch-join 가능한 기존 메서드 쓰면 더 좋아요)
+    var draft = draftRepository.findById(room.getDraftId())
+        .orElseThrow(() -> new IllegalArgumentException("draft not found: " + room.getDraftId()));
+    Round round = draft.getRound();
+    List<Participant> participants = draft.getParticipants();
 
-    // round + participants 로 합산 점수 집계 (없으면 0점 처리)
-    List<Object[]> rows = participantPlayerRepository
-        .sumPointsByParticipant(loaded.round, loaded.participants);
+    // ★ 라운드 내 진행/시작된 경기 기준 실시간 총점
+    Map<UUID, Integer> totals = participantPlayerRepository
+        .sumLivePointsByParticipant(round, participants)
+        .stream()
+        .collect(Collectors.toMap(
+            r -> (UUID) r[0],
+            r -> ((Number) r[1]).intValue()
+        ));
 
+    // 아이템 구성
     List<ScoreboardItem> items = new ArrayList<>();
-
-    // 점수 있는 참가자
-    for (Object[] r : rows) {
-      UUID participantId = (UUID) r[0];
-      long total = ((Number) r[1]).longValue();
-      Participant p = pMap.get(participantId);
-
-      String email = (p.isDummy() || p.getUser() == null) ? "BOT" : p.getUser().getEmail();
-      UUID userId = (p.isDummy() || p.getUser() == null) ? null : p.getUser().getId();
+    for (Participant p : participants) {
+      int total = totals.getOrDefault(p.getId(), 0);
 
       items.add(ScoreboardItem.builder()
-          .participantId(participantId)
-          .userId(userId)
-          .email(email)
-          .totalPoints(total)
-          .rank(0)
+          .participantId(p.getId())
+          .userId(p.isDummy() ? null : p.getUser().getId())
+          .email(p.isDummy() ? "BOT" : p.getUser().getEmail())
+          .totalPoints(total)                    // ★ 화면에 보여줄 점수
+          .leaguePoints(p.getScore())            // 0~3 (정산 후에는 값 존재)
+          .rank(0)                               // 아래서 계산해서 세팅
           .build());
     }
 
-    // 점수 레코드가 아직 없는 참가자도 0점으로 포함
-    Set<UUID> present = items.stream().map(ScoreboardItem::getParticipantId).collect(Collectors.toSet());
-    for (Participant p : loaded.participants) {
-      if (!present.contains(p.getId())) {
-        String email = (p.isDummy() || p.getUser() == null) ? "BOT" : p.getUser().getEmail();
-        UUID userId = (p.isDummy() || p.getUser() == null) ? null : p.getUser().getId();
-
-        items.add(ScoreboardItem.builder()
-            .participantId(p.getId())
-            .userId(userId)
-            .email(email)
-            .totalPoints(0L)
-            .rank(0)
-            .build());
-      }
+    // ★ 동점 동일 순위 부여(competition ranking: 1,1,3,4)
+    items.sort(Comparator.comparingInt(ScoreboardItem::getTotalPoints).reversed());
+    int shownRank = 0;
+    Integer prev = null;
+    for (int i = 0; i < items.size(); i++) {
+      int tp = items.get(i).getTotalPoints();
+      if (prev == null || !prev.equals(tp)) shownRank = i + 1;
+      items.get(i).setRank(shownRank);
+      prev = tp;
     }
 
-    // 내림차순 정렬 + 랭크 부여(동점 처리 단순화)
-    items.sort(Comparator.comparingLong(ScoreboardItem::getTotalPoints).reversed());
-    int rank = 1;
-    for (ScoreboardItem it : items) it.setRank(rank++);
     return items;
   }
 
-  /** 특정 참가자의 로스터(11인) + 포메이션 문자열 */
-  @Override
+
+  @Transactional(readOnly = true)
   public RosterResponse getRoster(UUID roomId, UUID participantId) {
-    var loaded = load(roomId);
+    // 1) 참가자
+    Participant participant = participantRepository.findById(participantId)
+        .orElseThrow(() -> new IllegalArgumentException("participant not found"));
 
-    // 해당 방 소속 참가자인지 검증
-    boolean belongs = loaded.participants.stream().anyMatch(p -> p.getId().equals(participantId));
-    if (!belongs) throw new IllegalArgumentException("Participant not in this room: " + participantId);
+    Round round = participant.getDraft().getRound();
 
-    List<ParticipantPlayer> picks = participantPlayerRepository.findByParticipant_Id(participantId);
+    // 2) 참가자 로스터(선택 선수들) 한번에 로드
+    List<ParticipantPlayer> picks =
+        participantPlayerRepository.findByParticipantIdFetchAll(participantId);
 
-    int gk=0, df=0, mid=0, fwd=0;
-    List<RosterResponse.PlayerSlot> slots = new ArrayList<>();
+    // 선수 UUID 목록
+    List<UUID> playerIds = picks.stream()
+        .map(pp -> pp.getPlayer().getId())
+        .toList();
 
-    for (var pp : picks) {
-      var pl = pp.getPlayer();
-      int type = pl.getElementType().getFplId(); // 1=GK, 2=DEF, 3=MID, 4=FWD
+    // 3) 선수별 라운드 포인트 합계 맵
+    Map<UUID, Integer> ptsByPlayer = Map.of();
+    if (!playerIds.isEmpty()) {
+      List<Object[]> ptsRows = playerFixtureStatRepository
+          .sumPlayerPointsForRound(round, playerIds);
 
-      String pos = switch (type) {
+      ptsByPlayer = ptsRows.stream().collect(Collectors.toMap(
+          row -> (UUID) row[0],
+          row -> ((Number) row[1]).intValue()
+      ));
+    }
+
+    // 4) 포지션 매핑: fplId → GK/DF/MID/FWD
+    Function<Player, String> toPos = pl -> {
+      int fplPos = pl.getElementType().getFplId(); // 1=GK,2=DEF,3=MID,4=FWD
+      return switch (fplPos) {
         case 1 -> "GK";
         case 2 -> "DF";
         case 3 -> "MID";
-        default -> "FWD";
+        case 4 -> "FWD";
+        default -> "MID";
       };
+    };
 
-      if (type==1) gk++; else if (type==2) df++; else if (type==3) mid++; else fwd++;
+    // 팀 이름(한글 우선)
+    Function<Team, String> teamName = t -> {
+      String kr = t.getKrName();
+      return (kr != null && !kr.isBlank()) ? kr : t.getName();
+    };
+
+    // 표시 이름: krName 우선, 없으면 webName
+    Function<Player, String> displayName = pl -> {
+      String kr = pl.getKrName();
+      return (kr != null && !kr.isBlank()) ? kr : pl.getWebName();
+    };
+
+    // 5) 카드 생성 + 포메이션 카운트
+    int df = 0, mid = 0, fwd = 0; // GK는 포메이션에서 제외
+    List<RosterResponse.PlayerSlot> slots = new ArrayList<>();
+
+    for (ParticipantPlayer pp : picks) {
+      Player pl = pp.getPlayer();
+      String pos = toPos.apply(pl);
+
+      if ("DF".equals(pos)) df++;
+      else if ("MID".equals(pos)) mid++;
+      else if ("FWD".equals(pos)) fwd++;
 
       slots.add(RosterResponse.PlayerSlot.builder()
           .playerId(pl.getId())
-          .name(pl.getWebName() != null ? pl.getWebName() : pl.getKrName()) // 이름 소스 통일
+          .name(displayName.apply(pl))
           .position(pos)
-          .team(pl.getTeam().getName())  // 필요 시 getKrName()으로 교체 가능
+          .team(teamName.apply(pl.getTeam()))
+          .points(ptsByPlayer.getOrDefault(pl.getId(), 0))
+          .pic(pl.getPic())
           .build());
     }
 
-    // 일반 표기: GK 제외 → DF-MID-FWD
+    // 6) 포메이션 표기: GK 제외 → DF-MID-FWD
     String formation = String.format("%d-%d-%d", df, mid, fwd);
 
     return RosterResponse.builder()
-        .participantId(participantId)
+        .participantId(participant.getId())
         .formation(formation)
         .players(slots)
         .build();
   }
+
+
 
   private record Loaded(UUID draftId, Round round, List<Participant> participants) {}
 }
