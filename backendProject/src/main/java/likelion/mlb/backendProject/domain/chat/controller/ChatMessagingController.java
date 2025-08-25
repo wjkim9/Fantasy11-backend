@@ -54,7 +54,7 @@ public class ChatMessagingController {
         "userId", userId != null ? userId.toString() : null,
         "createdAt", saved.getCreatedAt().toString()
     );
-
+    System.out.println("------------받은메세지"+req.getContent());
     // ✅ 즉시 현재 노드의 클라이언트에게 전달
     messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
     
