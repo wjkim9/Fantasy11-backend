@@ -55,7 +55,10 @@ public class ChatMessagingController {
         "createdAt", saved.getCreatedAt().toString()
     );
 
-
+    // ✅ 즉시 현재 노드의 클라이언트에게 전달
+    messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
+    
+    // ✅ 다른 노드를 위해 Redis로도 전달
     chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
   }
 }
