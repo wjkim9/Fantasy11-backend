@@ -41,6 +41,7 @@ public class TurnService {
         m.put("updatedAt", String.valueOf(now));
         m.put("draftCnt", String.valueOf(req.draftCnt()));
         redis.opsForHash().putAll(stateKey, m);
+        redis.expire(stateKey, 60, TimeUnit.MINUTES); // 60분 TTL 설정
 
         // 타이머 TTL: 키 값은 검증/디버깅용으로 deadlineAt 저장(원하는 값으로 대체 가능)
 //        redis.opsForValue().set(timerKey, String.valueOf(deadlineAt), winSec, TimeUnit.SECONDS);

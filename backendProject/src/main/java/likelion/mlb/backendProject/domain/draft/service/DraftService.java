@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,6 +53,16 @@ public class DraftService {
     private final UserRepository userRepository;
     private final DraftRepository draftRepository;
     private final ElementTypeRepository elementTypeRepository;
+
+
+    // 자기 자신 프록시 주입 (트랜잭션 프록시 통과용)
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private DraftService self;
+
+    // 지연 실행 스케줄러 (서비스 내부 전용)
+    private final java.util.concurrent.ScheduledExecutorService botScheduler =
+            java.util.concurrent.Executors.newScheduledThreadPool(1);
 
     @Transactional
     public void selectPlayer(DraftRequest draftRequest
@@ -229,7 +240,6 @@ public class DraftService {
             if (currentUserNumber == 4) {
                 // 마지막 유저가 한 번 더, 다음 라운드로 넘어감
                 nextUserNumber = 4;
-//                round++;
             } else {
                 nextUserNumber = (short) (currentUserNumber + 1);
             }
@@ -237,17 +247,10 @@ public class DraftService {
             if (currentUserNumber == 1) {
                 // 첫 번째 유저가 한 번 더, 다음 라운드로 넘어감
                 nextUserNumber = 1;
-//                round++;
             } else {
                 nextUserNumber = (short) (currentUserNumber - 1);
             }
         }
-
-//        if (currentUserNumber + 1 > 4) {
-//            nextUserNumber = (short) ((currentUserNumber + 1) % 4);
-//        } else {
-//            nextUserNumber = (short) (currentUserNumber + 1);
-//        }
 
         System.out.println("updateNextTurn currentUserNumber :"+currentUserNumber
                 +" , nextUserNumber : "+nextUserNumber+ " , draftId : " +draft.getId());
@@ -260,6 +263,71 @@ public class DraftService {
 
         draftRequest.setNextUserNumber(nextUserNumber);
         draftRequest.setDraftCnt(draftCnt);
+
+        // 다음 차례가 bot일 시 처리(단, draftCnt가 44이면 마지막 순서이므로 종료)
+        if (nextParticipant.isDummy() && draftCnt < 44) {
+            log.info("다음 턴이 Bot입니다. 10초 후 자동 선택 예약 - participantId={}", nextParticipant.getId());
+            UUID draftIdForBot = draft.getId();
+            UUID botParticipantId = nextParticipant.getId();
+
+            botScheduler.schedule(() -> {
+                try {
+                    // self 프록시로 호출해야 @Transactional 적용됨
+                    self.handleBotTurn(draftIdForBot, botParticipantId);
+                } catch (Exception e) {
+                    log.error("Bot 자동 선택 처리 중 예외 발생", e);
+                }
+            }, 10, java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+
+    // Bot의 드래프트 처리
+    @Transactional
+    public void handleBotTurn(UUID draftId, UUID botParticipantId) {
+        try {
+            Draft draft = draftRepository.findById(draftId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.DRAFT_NOT_FOUND));
+            Participant botParticipant = participantRepository.findById(botParticipantId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.PARTICIPANT_NOT_FOUND));
+
+            // Bot이 선택할 수 있는 포지션 조회
+            List<ElementType> elementTypes =
+                    elementTypeRepository.findAvailableElementTypesByParticipant(botParticipant.getId());
+            List<UUID> elementTypeIds = elementTypes.stream()
+                    .map(ElementType::getId)
+                    .toList();
+
+            // 랜덤 선수 1명 선택
+            Player randomPlayer = playerRepository.findRandomAvailablePlayer(draft.getId(), elementTypeIds)
+                    .orElseThrow(() -> new IllegalArgumentException("Bot Random Player not found"));
+
+            // **fetch join으로 team과 elementType 강제 로딩**
+            Player player = playerRepository.findByIdWithTeamAndElementType(randomPlayer.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+
+            DraftRequest botRequest = Player.toDraftRequest(player);
+            botRequest.setDraftId(draft.getId());
+            botRequest.setParticipantId(botParticipant.getId());
+            botRequest.setUserName("BOT"+botParticipant.getUserNumber());
+            botRequest.setType("SELECT_BOT_RANDOM_PLAYER");
+
+            boolean isCurrentParticipant = turnService.checkCurrentParticipant(botRequest);
+            botRequest.setCurrentParticipant(isCurrentParticipant);
+
+            if (isCurrentParticipant) {
+                saveDraft(botRequest, botParticipant);
+                updateNextTurn(draft, botParticipant, botRequest);
+            }
+
+            String channel = "draft." + botRequest.getDraftId();
+            String msg = objectMapper.writeValueAsString(botRequest);
+            redisPublisher.publish(channel, msg);
+
+            log.info("Bot이 자동으로 선수를 선택했습니다: {}", player.getWebName());
+
+        } catch (Exception e) {
+            log.error("Bot 자동 선택 중 오류 발생", e);
+        }
     }
 
 }
