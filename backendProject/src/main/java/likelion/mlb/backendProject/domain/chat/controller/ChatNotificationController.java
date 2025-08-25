@@ -50,7 +50,7 @@ public class ChatNotificationController {
         "createdAt", saved.getCreatedAt().toString()
     );
     messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
-    chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
+    //chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
 
     return ResponseEntity.ok(Map.of("ok", true, "id", saved.getId().toString()));
   }
