@@ -43,22 +43,38 @@ public class ChatMessagingController {
       // 또는 그냥 return;  // 조용히 무시하고 싶으면
     }
 
+
+    System.out.println("------------/chat/{roomId}/send 시작 ");
+
     // 안전장치: 메시지의 roomId는 URL의 roomId로 강제
-    ChatMessage saved = chatMessageService.saveUserMessage(roomId, userId, req.getContent());
+    //ChatMessage saved = chatMessageService.saveUserMessage(roomId, userId, req.getContent());
+
+//    Map<String, Object> payload = Map.of(
+//        "id", saved.getId().toString(),
+//        "chatRoomId", roomId.toString(),
+//        "type", saved.getMessageType().name(),
+//        "content", saved.getContent(),
+//        "userId", userId != null ? userId.toString() : null,
+//        "createdAt", saved.getCreatedAt().toString()
+//    );
 
     Map<String, Object> payload = Map.of(
-        "id", saved.getId().toString(),
+        "id", 2,
         "chatRoomId", roomId.toString(),
-        "type", saved.getMessageType().name(),
-        "content", saved.getContent(),
+        "type", "USER",
+        "content", "웹소켓 테스트",
         "userId", userId != null ? userId.toString() : null,
-        "createdAt", saved.getCreatedAt().toString()
+        "createdAt", "ㅇㅇㅇ"
     );
+
+    //System.out.println("------------받은메세지 payload"+payload.get(0).toString());
+
     System.out.println("------------받은메세지"+req.getContent());
+
     // ✅ 즉시 현재 노드의 클라이언트에게 전달
-   // messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
+    messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
     
     // ✅ 다른 노드를 위해 Redis로도 전달
-    chatRedisPublisher.publishToRoom("/topic/chat/" + roomId, new java.util.HashMap<>(payload));
+    chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
   }
 }
