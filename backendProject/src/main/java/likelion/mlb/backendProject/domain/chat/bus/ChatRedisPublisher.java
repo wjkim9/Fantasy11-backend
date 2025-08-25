@@ -14,7 +14,9 @@ import org.springframework.stereotype.Component;
 public class ChatRedisPublisher {
   private final StringRedisTemplate stringRedisTemplate;
   private final ObjectMapper objectMapper;
-  private final String nodeId = java.util.UUID.randomUUID().toString();
+  // JVM 런타임 식별자를 사용하여 노드 구분 (재시작 시마다 변경됨)
+  private final String nodeId = System.getProperty("node.id", 
+      java.lang.management.ManagementFactory.getRuntimeMXBean().getName());
 
   public void publishToRoom(UUID roomId, Map<String, Object> payload) {
     try {
