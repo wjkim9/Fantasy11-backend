@@ -78,4 +78,13 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
         """, nativeQuery = true)
     Optional<Player> findRandomAvailablePlayer(@Param("draftId") UUID draftId,
                                                @Param("elementTypeIds") List<UUID> elementTypeIds);
+
+    @Query("""
+        SELECT p 
+        FROM Player p
+        JOIN FETCH p.team
+        JOIN FETCH p.elementType
+        WHERE p.id = :playerId
+    """)
+    Optional<Player> findByIdWithTeamAndElementType(@Param("playerId") UUID playerId);
 }
