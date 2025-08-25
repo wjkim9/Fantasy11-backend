@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import likelion.mlb.backendProject.domain.chat.entity.ChatMessage;
 import likelion.mlb.backendProject.domain.chat.service.ChatMessageService;
 import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
+import org.springframework.transaction.annotation.Transactional;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,6 +27,7 @@ public class ChatMessagingController {
   private final ChatRedisPublisher chatRedisPublisher;
 
 
+  @Transactional
   @MessageMapping("/chat/{roomId}/send")
   public void send(@DestinationVariable UUID roomId,
       ChatSendRequest req,
@@ -47,25 +49,17 @@ public class ChatMessagingController {
     System.out.println("------------/chat/{roomId}/send 시작 ");
 
     // 안전장치: 메시지의 roomId는 URL의 roomId로 강제
-    //ChatMessage saved = chatMessageService.saveUserMessage(roomId, userId, req.getContent());
-
-//    Map<String, Object> payload = Map.of(
-//        "id", saved.getId().toString(),
-//        "chatRoomId", roomId.toString(),
-//        "type", saved.getMessageType().name(),
-//        "content", saved.getContent(),
-//        "userId", userId != null ? userId.toString() : null,
-//        "createdAt", saved.getCreatedAt().toString()
-//    );
+    ChatMessage saved = chatMessageService.saveUserMessage(roomId, userId, req.getContent());
 
     Map<String, Object> payload = Map.of(
-        "id", 2,
+        "id", saved.getId().toString(),
         "chatRoomId", roomId.toString(),
-        "type", "USER",
-        "content", "웹소켓 테스트",
+        "type", saved.getMessageType().name(),
+        "content", saved.getContent(),
         "userId", userId != null ? userId.toString() : null,
-        "createdAt", "ㅇㅇㅇ"
+        "createdAt", saved.getCreatedAt().toString()
     );
+
 
     //System.out.println("------------받은메세지 payload"+payload.get(0).toString());
 
