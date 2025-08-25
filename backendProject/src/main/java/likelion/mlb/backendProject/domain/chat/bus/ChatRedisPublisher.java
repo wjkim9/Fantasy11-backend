@@ -18,11 +18,11 @@ public class ChatRedisPublisher {
   private final String nodeId = System.getProperty("node.id", 
       java.lang.management.ManagementFactory.getRuntimeMXBean().getName());
 
-  public void publishToRoom(UUID roomId, Map<String, Object> payload) {
+  public void publishToRoom(String roomId, Map<String, Object> payload) {
     try {
       payload.put("_src", nodeId); // 루프 방지 태그
       String json = objectMapper.writeValueAsString(payload);
-      stringRedisTemplate.convertAndSend(ChatChannels.roomChannel(roomId), json);
+      stringRedisTemplate.convertAndSend(roomId, json);
     } catch (Exception ignore) {}
   }
 
