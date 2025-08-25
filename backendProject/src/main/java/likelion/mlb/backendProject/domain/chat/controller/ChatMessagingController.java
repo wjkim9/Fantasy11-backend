@@ -56,9 +56,9 @@ public class ChatMessagingController {
     );
     System.out.println("------------받은메세지"+req.getContent());
     // ✅ 즉시 현재 노드의 클라이언트에게 전달
-    messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
+   // messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
     
     // ✅ 다른 노드를 위해 Redis로도 전달
-    chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
+    chatRedisPublisher.publishToRoom("/topic/chat/" + roomId, new java.util.HashMap<>(payload));
   }
 }
