@@ -11,6 +11,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+@Tag(name = "Chat Read State", description = "채팅 만음 상태 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat-rooms")
@@ -20,8 +27,16 @@ public class ChatReadController {
   private final ChatReadService chatReadService;
   private final ChatMembershipRepository membershipRepository;
 
+  @Operation(summary = "릶음 상태 조회", description = "사용자의 마지막 읽은 메시지와 미읽 개수를 조회합니다")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "읽음 상태 조회 성공"),
+      @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+      @ApiResponse(responseCode = "403", description = "채팅방 멤버가 아님"),
+      @ApiResponse(responseCode = "500", description = "내부 서버 오류")
+  })
   @GetMapping("/{roomId}/read-state")
-  public ResponseEntity<?> getReadState(@PathVariable UUID roomId,
+  public ResponseEntity<?> getReadState(
+      @Parameter(description = "채팅방 ID", required = true) @PathVariable UUID roomId,
       @AuthenticationPrincipal CustomUserDetails cud) {
     if (cud == null || cud.getUser() == null) {
       log.debug("[read-state] 401: no principal");
@@ -46,9 +61,18 @@ public class ChatReadController {
     }
   }
 
+  @Operation(summary = "메시지 읽음 처리", description = "지정된 메시지까지 읽음으로 표시합니다")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "읽음 처리 성공"),
+      @ApiResponse(responseCode = "400", description = "잘못된 메시지 ID"),
+      @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+      @ApiResponse(responseCode = "403", description = "채팅방 멤버가 아님"),
+      @ApiResponse(responseCode = "500", description = "내부 서버 오류")
+  })
   @PostMapping("/{roomId}/read-state")
-  public ResponseEntity<?> markRead(@PathVariable UUID roomId,
-      @RequestBody(required = false) Map<String, String> body,
+  public ResponseEntity<?> markRead(
+      @Parameter(description = "채팅방 ID", required = true) @PathVariable UUID roomId,
+      @Parameter(description = "읽음 요청 데이터 (messageId 포함)") @RequestBody(required = false) Map<String, String> body,
       @AuthenticationPrincipal CustomUserDetails cud) {
     if (cud == null || cud.getUser() == null) {
       log.debug("[mark-read] 401: no principal");

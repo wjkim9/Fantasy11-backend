@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-//import likelion.mlb.backendProject.domain.chat.bus.ChatRedisPublisher;
+import likelion.mlb.backendProject.domain.chat.bus.ChatRedisPublisher;
 import likelion.mlb.backendProject.domain.chat.entity.ChatMessage;
 import likelion.mlb.backendProject.domain.chat.repository.AlertRoutingRepository;
 import likelion.mlb.backendProject.domain.chat.repository.ChatMessageRepository;
@@ -28,7 +28,7 @@ public class ChatNotificationServiceImpl implements ChatNotificationService {
   private final ChatMessageRepository chatMessageRepository;
   private final ChatMessageService chatMessageService;
   private final SimpMessagingTemplate messagingTemplate;
-  //private final ChatRedisPublisher chatRedisPublisher;  // Redis 방식 비활성화
+  private final ChatRedisPublisher chatRedisPublisher;
 
   /**
    * LiveDataService에서 바로 호출 (현재 트랜잭션 커밋 후에 실행되도록 지연)
@@ -77,7 +77,6 @@ public class ChatNotificationServiceImpl implements ChatNotificationService {
       // ✅ 서비스 경유 저장: AFTER_COMMIT 색인(ES)까지 자동 수행
       var saved = chatMessageService.saveSystemAlert(roomId, msgText);
 
-      // ✅ 직접 WebSocket으로 전송 (즉시 전달)
       var payload = Map.of(
           "id", saved.getId().toString(),
           "chatRoomId", roomId.toString(),
@@ -86,9 +85,7 @@ public class ChatNotificationServiceImpl implements ChatNotificationService {
           "createdAt", saved.getCreatedAt().toString()
       );
       messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
-      
-      // Redis 방식 (주석처리 - 지연 발생)
-      //chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
+      chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
     }
   }
 
