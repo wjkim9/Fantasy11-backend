@@ -9,7 +9,7 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component  // Redis 방식 비활성화
 @RequiredArgsConstructor
 public class ChatRedisSubscriber implements MessageListener {
 

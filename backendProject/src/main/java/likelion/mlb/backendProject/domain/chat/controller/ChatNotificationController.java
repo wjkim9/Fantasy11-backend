@@ -5,7 +5,7 @@ package likelion.mlb.backendProject.domain.chat.controller;
  * */
 import java.util.Map;
 import java.util.UUID;
-import likelion.mlb.backendProject.domain.chat.bus.ChatRedisPublisher;
+//import likelion.mlb.backendProject.domain.chat.bus.ChatRedisPublisher;
 import likelion.mlb.backendProject.domain.chat.service.ChatMessageService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class ChatNotificationController {
 
 
   private final SimpMessagingTemplate messagingTemplate;
-  private final ChatRedisPublisher chatRedisPublisher;
+  //private final ChatRedisPublisher chatRedisPublisher;  // Redis 방식 비활성화
   private final ChatNotificationService notificationService;
   private final ChatMessageService chatMessageService; // 디버그용
 
@@ -41,7 +41,7 @@ public class ChatNotificationController {
 
     var saved = chatMessageService.saveSystemAlert(roomId, text); // DB 저장
 
-    // ✅ STOMP 브로드캐스트 + Redis fan-out
+    // ✅ 직접 WebSocket으로 브로드캐스트 (즉시 전송)
     Map<String, Object> payload = Map.of(
         "id", saved.getId().toString(),
         "chatRoomId", roomId.toString(),
@@ -50,7 +50,9 @@ public class ChatNotificationController {
         "createdAt", saved.getCreatedAt().toString()
     );
     messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
-    chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
+    
+    // Redis 방식 (주석처리 - 지연 발생)
+    //chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
 
     return ResponseEntity.ok(Map.of("ok", true, "id", saved.getId().toString()));
   }
