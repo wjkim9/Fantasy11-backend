@@ -8,7 +8,11 @@ import lombok.*;
 @Entity
 @Table(name = "chat_read_state",
     uniqueConstraints = @UniqueConstraint(columnNames = {"chat_room_id", "user_id"}))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChatReadState {
 
   @Id
@@ -29,8 +33,12 @@ public class ChatReadState {
 
   @PrePersist
   void prePersist() {
-    if (id == null) id = UUID.randomUUID();
-    if (lastReadAt == null) lastReadAt = Instant.EPOCH; // 처음엔 1970-01-01
+    if (id == null) {
+      id = UUID.randomUUID();
+    }
+    if (lastReadAt == null) {
+      lastReadAt = Instant.EPOCH; // 처음엔 1970-01-01
+    }
   }
 
   public void mark(UUID messageId, Instant when) {

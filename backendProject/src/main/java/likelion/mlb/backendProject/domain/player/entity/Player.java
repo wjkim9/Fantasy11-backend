@@ -1,6 +1,9 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
+
+import java.util.stream.Collectors;
+
 import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.player.cache.dto.PlayerDto;
 import likelion.mlb.backendProject.domain.team.entity.Team;
@@ -15,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "player")
@@ -141,7 +143,6 @@ public class Player extends BaseTime {
         String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
                 + element.getCode() + ".png";
         this.pic = picUri;
-        this.code = element.getCode();
         this.status = element.getStatus();
         this.fplId = element.getFplId();
         this.news = element.getNews();
