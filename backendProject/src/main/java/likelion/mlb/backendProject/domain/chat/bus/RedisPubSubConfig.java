@@ -7,7 +7,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-@Configuration
+//@Configuration  // Redis 방식 비활성화
 @RequiredArgsConstructor
 public class RedisPubSubConfig {
 
