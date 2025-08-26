@@ -1,7 +1,9 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
+
 import java.util.stream.Collectors;
+
 import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.player.cache.dto.PlayerDto;
 import likelion.mlb.backendProject.domain.team.entity.Team;
@@ -150,6 +152,7 @@ public class Player extends BaseTime {
         this.etId = element.getElementType();
         this.team = teamMap.get(element.getTeam());
         this.elementType = typeMap.get(element.getElementType());
+        this.pic = picUri;
     }
 
     /**

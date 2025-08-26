@@ -20,4 +20,10 @@ public class ElementTypeDto {
     // 선수 포지션 한글명
     private String krName = "";
 
+    // 베스트 일레븐에서 해당 포지션을 뽑아야 하는 최소 수
+    private Integer squadMinPlay;
+
+    // 베스트 일레븐에서 해당 포지션을 뽑아야 하는 최대 수
+    private Integer squadMaxPlay;
+
 }

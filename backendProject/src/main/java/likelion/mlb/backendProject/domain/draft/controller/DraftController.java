@@ -7,11 +7,13 @@ import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.draft.service.DraftService;
 
+import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,6 +51,25 @@ public class DraftController {
     }
 
     /*
+     * 선수 랜덤 드래프트 웹소켓 통신
+     */
+    @MessageMapping("/draft/selectRandomPlayer")
+    public void selectRandomPlayer(@Payload DraftRequest draftRequest, Principal principal) throws JsonProcessingException {
+
+        try {
+            draftService.selectRandomPlayer(draftRequest, principal);
+        } catch (RuntimeException e) {
+            log.error(" 랜덤 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        } catch (JsonProcessingException e) {
+            log.error(" 랜덤 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        }
+    }
+
+    /*
     * 참여자(participant)클릭 시 해당 참여자가 선택한 선수 리스트 가져오기
     * */
     @GetMapping("/{participantId}/players")
@@ -63,8 +84,10 @@ public class DraftController {
      */
     @GetMapping("/{draftId}/participants")
     @ResponseBody
-    public List<DraftParticipant> getParticipantsByDraftId(@PathVariable("draftId") UUID draftId) {
-        return draftService.getParticipantsByDraftId(draftId);
+    public List<DraftParticipant> getParticipantsByDraftId(@PathVariable("draftId") UUID draftId
+    , @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userEmail = userDetails.getUser().getEmail();
+        return draftService.getParticipantsByDraftId(draftId, userEmail);
     }
 
     /*

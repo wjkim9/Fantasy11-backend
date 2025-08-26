@@ -14,31 +14,54 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2) JDK 설치 (Spring 빌드)
+      # 2) JDK 설치 후 JAR 빌드
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3) Gradle 빌드 (테스트 생략 예시)
-      - name: Build Spring Boot
+      - name: Build with Gradle
         run: ./gradlew clean build -x test
+        working-directory: backendProject
 
-      # 4) EC2로 파일 전송 (단, .env 제외)
-      - name: Upload artifacts to EC2
+      # (디버그) Rename JAR 직전: 현재 위치와 산출물 확인
+      - name: Debug working dir & artifacts
+        run: |
+          set -euxo pipefail
+          echo "PWD=$(pwd)"
+          ls -al
+          echo "=== build/libs ==="
+          ls -al build/libs || true
+        working-directory: backendProject
+
+      # Rename JAR: 'plain' 제외하고 단일 JAR만 app.jar로 복사
+      - name: Rename JAR
+        run: |
+          set -euo pipefail
+          # 우선순위: -plain 제거 → 가장 최신 JAR 1개 선택
+          JAR_FILE=$(ls -t build/libs/*.jar | grep -v '\-plain\.jar$' | head -n 1 || true)
+          if [ -z "${JAR_FILE:-}" ]; then
+            # 만약 -plain만 있다면 그 중 최신 1개 선택
+            JAR_FILE=$(ls -t build/libs/*.jar | head -n 1)
+          fi
+          echo "Selected JAR: $JAR_FILE"
+          cp "$JAR_FILE" app.jar
+          ls -al app.jar
+        working-directory: backendProject
+
+      # 4) EC2로 파일 업로드 (JAR, docker-compose-prod.yml, Dockerfile, .env)
+      - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: |
-            docker-compose-prod.yml
-            backendProject/Dockerfile
-            backendProject/build/libs/*.jar
+            backendProject/app.jar
           target: ${{ secrets.EC2_APP_DIR }}
 
-      # 5) EC2에서 배포 (Amazon Linux)
+      # 5) EC2에서 Docker Compose 실행
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -50,12 +73,7 @@ jobs:
             APP_DIR="${{ secrets.EC2_APP_DIR }}"
             cd "$APP_DIR"
 
-            # ---- 여기서 .env 파일 생성 ----
-            cat << 'EOF' > .env
-            ${{ secrets.EC2_ENV_FILE }}
-            EOF
-
-            # Docker/compose 설치(없을 때)
+            # Docker 설치 확인
             if ! command -v docker >/dev/null 2>&1; then
               if command -v dnf >/dev/null 2>&1; then
                 sudo dnf -y update
@@ -68,34 +86,14 @@ jobs:
               sudo systemctl start docker
               sudo usermod -aG docker ec2-user || true
             fi
-            if ! docker compose version >/dev/null 2>&1; then
-              if command -v dnf >/dev/null 2>&1; then
-                sudo dnf -y install docker-compose-plugin
-              else
-                sudo yum -y install docker-compose-plugin || true
-              fi
+
+            # docker-compose 설치 확인
+            if ! command -v docker-compose >/dev/null 2>&1; then
+              sudo curl -SL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # 기존 컨테이너 중지 후 재빌드/재기동
-            sudo docker compose -f docker-compose-prod.yml down || true
-            sudo docker compose -f docker-compose-prod.yml build --no-cache
-            sudo docker compose -f docker-compose-prod.yml up -d
-
-            # (옵션) 안 쓰는 이미지 정리
+            # 기존 컨테이너 중지 후 새 빌드 실행
+            sudo docker-compose -f docker-compose-prod.yml down || true
+            sudo docker-compose -f docker-compose-prod.yml up -d --build
             sudo docker image prune -f
-
-      # 6) (선택) CloudFront 캐시 무효화
-      - name: Configure AWS credentials
-        if: ${{ secrets.CF_DISTRIBUTION_ID != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Invalidate CloudFront
-        if: ${{ secrets.CF_DISTRIBUTION_ID != '' }}
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "${{ secrets.CF_DISTRIBUTION_ID }}" \
-            --paths "/*"
