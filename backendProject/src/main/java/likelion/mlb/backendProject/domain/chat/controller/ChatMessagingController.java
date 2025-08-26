@@ -4,7 +4,7 @@ package likelion.mlb.backendProject.domain.chat.controller;
 import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
-//import likelion.mlb.backendProject.domain.chat.bus.ChatRedisPublisher;
+import likelion.mlb.backendProject.domain.chat.bus.ChatRedisPublisher;
 import likelion.mlb.backendProject.domain.chat.dto.ChatSendRequest;
 import likelion.mlb.backendProject.domain.chat.repository.ChatMembershipRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class ChatMessagingController {
   private final ChatMessageService chatMessageService;
   private final SimpMessagingTemplate messagingTemplate;
   private final ChatMembershipRepository membershipRepository;
-  //private final ChatRedisPublisher chatRedisPublisher;
+  private final ChatRedisPublisher chatRedisPublisher;
 
 
   @MessageMapping("/chat/{roomId}/send")
@@ -55,11 +55,7 @@ public class ChatMessagingController {
         "createdAt", saved.getCreatedAt().toString()
     );
 
-    // Redis 대신 직접 WebSocket으로 전송 (즉시 전달)
-    String topic = "/topic/chat/" + roomId;
-    messagingTemplate.convertAndSend(topic, payload);
-    
-    // Redis 방식 (주석처리 - 지연 발생)
-    //chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
+    // Redis pub/sub 방식으로 전송
+    chatRedisPublisher.publishToRoom(roomId, new java.util.HashMap<>(payload));
   }
 }
