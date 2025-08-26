@@ -7,11 +7,13 @@ import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.draft.dto.DraftResponse;
 import likelion.mlb.backendProject.domain.draft.service.DraftService;
 
+import likelion.mlb.backendProject.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,6 +57,25 @@ public class DraftController {
         }
     }
 
+    /*
+     * 선수 랜덤 드래프트 웹소켓 통신
+     */
+    @MessageMapping("/draft/selectRandomPlayer")
+    public void selectRandomPlayer(@Payload DraftRequest draftRequest, Principal principal) throws JsonProcessingException {
+
+        try {
+            draftService.selectRandomPlayer(draftRequest, principal);
+        } catch (RuntimeException e) {
+            log.error(" 랜덤 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        } catch (JsonProcessingException e) {
+            log.error(" 랜덤 드래프트 postgreSql 저장 실패 : {}", e.getMessage());
+
+            throw e;
+        }
+    }
+
     @Operation(summary = "참여자별 선수 목록 조회", description = "특정 참여자가 선택한 선수 리스트를 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "선수 목록 조회 성공"),
@@ -67,7 +88,6 @@ public class DraftController {
         return draftService.getPlayersByParticipantId(participantId);
     }
 
-
     @Operation(summary = "드래프트 참여자 목록 조회", description = "드래프트 방에 속해있는 참여자 목록을 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "참여자 목록 조회 성공"),
@@ -76,8 +96,10 @@ public class DraftController {
     @GetMapping("/{draftId}/participants")
     @ResponseBody
     public List<DraftParticipant> getParticipantsByDraftId(
-        @Parameter(description = "드래프트 ID", required = true) @PathVariable("draftId") UUID draftId) {
-        return draftService.getParticipantsByDraftId(draftId);
+        @Parameter(description = "드래프트 ID", required = true) @PathVariable("draftId") UUID draftId,
+        @Parameter(description = "인증된 사용자 정보", hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userEmail = userDetails.getUser().getEmail();
+        return draftService.getParticipantsByDraftId(draftId, userEmail);
     }
 
     @Operation(summary = "드래프트 전체 선수 목록 조회", description = "드래프트에서 선택된 모든 선수 목록을 조회합니다")

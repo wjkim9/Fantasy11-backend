@@ -47,4 +47,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     java.util.List<likelion.mlb.backendProject.domain.match.entity.Participant>
     findLatestByUser(@Param("userId") java.util.UUID userId,
         org.springframework.data.domain.Pageable pageable);
+
+
+    Optional<Participant> findByDraftAndUserNumber(Draft draft, short userNumber);
 }
