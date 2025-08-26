@@ -39,8 +39,8 @@ public class DraftTimingService {
     /** UTC(저장/비교용) */
     private static final ZoneId  UTC       = ZoneOffset.UTC;
     /** 드래프트 오픈/락 시각(정책 상수) — 필요 시 application.properties로 분리 가능 */
-    private static final LocalTime OPEN_TIME = LocalTime.of(8, 0);
-    private static final LocalTime LOCK_TIME = LocalTime.of(17, 5);
+    private static final LocalTime OPEN_TIME = LocalTime.of(20, 50);
+    private static final LocalTime LOCK_TIME = LocalTime.of(21, 00);
 
     /**
      * "현재 시각 이후" 첫 라운드의 드래프트 윈도우를 반환한다.
@@ -85,6 +85,7 @@ public class DraftTimingService {
 
         // 정책: 경기일(KST) 기준 2일 전이 draftDay
         LocalDate draftDay = startedAtKst.toLocalDate().minusDays(2);
+
         LocalDateTime openAt = LocalDateTime.of(draftDay, OPEN_TIME);
         LocalDateTime lockAt = LocalDateTime.of(draftDay, LOCK_TIME);
 
