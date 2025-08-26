@@ -27,7 +27,8 @@ public class RedisSubscriber implements MessageListener {
             String msgBody = new String(message.getBody());
             DraftRequest draftRequest = objectMapper.readValue(msgBody, DraftRequest.class);
 
-            simpMessagingTemplate.convertAndSend("/topic/draft." + draftRequest.getDraftId(), draftRequest);
+//            simpMessagingTemplate.convertAndSend("/topic/draft." + draftRequest.getDraftId(), draftRequest);
+            simpMessagingTemplate.convertAndSend("/chat/" + draftRequest.getDraftId(), draftRequest);
         } catch (Exception e) {
 
         }

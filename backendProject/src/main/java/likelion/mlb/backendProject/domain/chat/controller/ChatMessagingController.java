@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.chat.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
@@ -28,10 +29,9 @@ public class ChatMessagingController {
 
 
   @Transactional
-  @MessageMapping("/chat/{roomId}/send")
-  public void send(@DestinationVariable UUID roomId,
-      ChatSendRequest req,
-      Principal principal) {
+  @MessageMapping("/chat/send")
+  public void send(ChatSendRequest req,
+      Principal principal) throws JsonProcessingException {
 
     UUID userId = null;
     if (principal instanceof Authentication auth
@@ -40,7 +40,7 @@ public class ChatMessagingController {
     }
 
     // ✅ 방 멤버인지 권한 체크 (아니면 바로 거절)
-    if (userId == null || !membershipRepository.isMember(roomId, userId)) {
+    if (userId == null || !membershipRepository.isMember(req.getRoomId(), userId)) {
       throw new org.springframework.messaging.MessagingException("Not a member of this chat room");
       // 또는 그냥 return;  // 조용히 무시하고 싶으면
     }
@@ -49,11 +49,11 @@ public class ChatMessagingController {
     System.out.println("------------/chat/{roomId}/send 시작 ");
 
     // 안전장치: 메시지의 roomId는 URL의 roomId로 강제
-    ChatMessage saved = chatMessageService.saveUserMessage(roomId, userId, req.getContent());
+    ChatMessage saved = chatMessageService.saveUserMessage(req.getRoomId(), userId, req.getContent());
 
     Map<String, Object> payload = Map.of(
         "id", saved.getId().toString(),
-        "chatRoomId", roomId.toString(),
+        "chatRoomId", req.getRoomId().toString(),
         "type", saved.getMessageType().name(),
         "content", saved.getContent(),
         "userId", userId != null ? userId.toString() : null,
@@ -66,9 +66,9 @@ public class ChatMessagingController {
     System.out.println("------------받은메세지"+req.getContent());
 
     // ✅ 즉시 현재 노드의 클라이언트에게 전달
-    //messagingTemplate.convertAndSend("/topic/chat/" + roomId, payload);
+    messagingTemplate.convertAndSend("/topic/chat/" + req.getRoomId(), payload);
     
     // ✅ 다른 노드를 위해 Redis로도 전달
-    chatRedisPublisher.publishToRoom("/topic/chat/" + roomId, new java.util.HashMap<>(payload));
+    chatRedisPublisher.publishToRoom("chat." + req.getRoomId(), payload);
   }
 }

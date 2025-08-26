@@ -1,6 +1,7 @@
 package likelion.mlb.backendProject.domain.chat.bus;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
@@ -18,12 +19,16 @@ public class ChatRedisPublisher {
   private final String nodeId = System.getProperty("node.id", 
       java.lang.management.ManagementFactory.getRuntimeMXBean().getName());
 
-  public void publishToRoom(String roomId, Map<String, Object> payload) {
-    try {
-      payload.put("_src", nodeId); // 루프 방지 태그
+  public void publishToRoom(String roomId, Map<String, Object> payload) throws JsonProcessingException {
+    System.out.println("roomId = "+roomId);
+    System.out.println("payload = "+payload);
+
+      //payload.put("_src", nodeId()); // 루프 방지 태그
       String json = objectMapper.writeValueAsString(payload);
+      System.out.println("publishToRoom = "+json);
+
       stringRedisTemplate.convertAndSend(roomId, json);
-    } catch (Exception ignore) {}
+
   }
 
   public String nodeId() { return nodeId; }
