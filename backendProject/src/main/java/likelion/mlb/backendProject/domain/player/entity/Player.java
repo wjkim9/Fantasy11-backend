@@ -1,6 +1,8 @@
 package likelion.mlb.backendProject.domain.player.entity;
 
 import jakarta.persistence.*;
+import java.util.stream.Collectors;
+import likelion.mlb.backendProject.domain.draft.dto.DraftRequest;
 import likelion.mlb.backendProject.domain.player.cache.dto.PlayerDto;
 import likelion.mlb.backendProject.domain.team.entity.Team;
 import likelion.mlb.backendProject.global.jpa.entity.BaseTime;
@@ -14,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "player")
@@ -114,8 +115,8 @@ public class Player extends BaseTime {
                                              Map<Integer, ElementType> typeMap,
                                              Map<Integer, Team> teamMap) {
 
-        String picUri = "https://resources.premierleague.com/premierleague/photos/players/250x250/p"
-                        + element.getCode() + ".png";
+        String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
+                + element.getCode() + ".png";
         return Player.builder()
                 .code(element.getCode())
                 .fplId(element.getFplId())
@@ -137,10 +138,9 @@ public class Player extends BaseTime {
     public void updatePlayer(FplElement element,
                              Map<Integer, ElementType> typeMap,
                              Map<Integer, Team> teamMap) {
-        String picUri = "https://resources.premierleague.com/premierleague/photos/players/250x250/p"
-                        + element.getCode() + ".png";
+        String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
+                + element.getCode() + ".png";
         this.pic = picUri;
-        this.code = element.getCode();
         this.status = element.getStatus();
         this.fplId = element.getFplId();
         this.news = element.getNews();
@@ -173,6 +173,27 @@ public class Player extends BaseTime {
                 .elementTypeKrName(p.getElementType().getKrName())
                 .build()
         ).collect(Collectors.toList());
+    }
+
+    /**
+     * Player 엔티티 → DraftRequest 변환
+     */
+    public static DraftRequest toDraftRequest(Player player) {
+        return DraftRequest.builder()
+            .playerId(player.getId())
+            .playerWebName(player.getWebName())
+            .playerKrName(player.getKrName())
+            .playerPic(player.getPic())
+
+            // team관련 설정
+            .teamName(player.getTeam().getName())
+            .teamKrName(player.getTeam().getKrName())
+
+            // 포지션(elementType) 관련 설정
+            .elementTypeId(player.getElementType().getId())
+            .elementTypePluralName(player.getElementType().getPluralName())
+            .elementTypeKrName(player.getElementType().getKrName())
+            .build();
     }
 
 }
