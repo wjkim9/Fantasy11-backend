@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-//@Component  // Redis 방식 비활성화
+@Component
 @RequiredArgsConstructor
 public class ChatRedisPublisher {
 
