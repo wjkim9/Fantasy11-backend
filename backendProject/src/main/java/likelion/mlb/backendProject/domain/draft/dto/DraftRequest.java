@@ -1,5 +1,6 @@
 package likelion.mlb.backendProject.domain.draft.dto;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,9 +15,13 @@ import java.util.UUID;
 @Builder
 public class DraftRequest {
 
+    private String type; // 요청 타입
+
     private UUID draftId; // 드래프트 방 pk값
 
     private UUID participantId; // 드래프트 참가자 pk값
+
+    private String userName; // 참가자 이름
 
     private UUID playerId; // player pk값
 
@@ -41,5 +46,14 @@ public class DraftRequest {
 
     // 한 참가자가 선수를 드래프트 했을 시 포지션 별 최대/최소 값 유지하는 지 여부
     private boolean isWithinSquadLimits = true;
+
+    // 현재 드래프트한 참가자가 현재 턴인지 유무
+    private boolean isCurrentParticipant = true;
+
+    private short nextUserNumber;
+
+    private short roundNo;
+
+    private Integer draftCnt;
 
 }

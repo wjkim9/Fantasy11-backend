@@ -116,7 +116,7 @@ public class Player extends BaseTime {
                                              Map<Integer, Team> teamMap) {
 
         String picUri = "https://resources.premierleague.com/premierleague25/photos/players/110x140/"
-         + element.getCode() + ".png";
+                + element.getCode() + ".png";
         return Player.builder()
                 .code(element.getCode())
                 .fplId(element.getFplId())
@@ -151,6 +151,7 @@ public class Player extends BaseTime {
         this.etId = element.getElementType();
         this.team = teamMap.get(element.getTeam());
         this.elementType = typeMap.get(element.getElementType());
+        this.pic = picUri;
     }
 
     /**

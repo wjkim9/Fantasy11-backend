@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-//FIXME 주석 추가할 것
+
 public interface ParticipantRepository extends JpaRepository<Participant, UUID> {
     boolean existsByDraft_IdAndUser_Id(UUID draftId, UUID userId);
 
@@ -47,4 +47,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     java.util.List<likelion.mlb.backendProject.domain.match.entity.Participant>
     findLatestByUser(@Param("userId") java.util.UUID userId,
         org.springframework.data.domain.Pageable pageable);
+
+
+    Optional<Participant> findByDraftAndUserNumber(Draft draft, short userNumber);
 }

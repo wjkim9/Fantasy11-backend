@@ -86,7 +86,17 @@ public class UnifiedWebSocketConfig implements WebSocketMessageBrokerConfigurer,
   @Override
   public void configureMessageBroker(MessageBrokerRegistry registry) {
     registry.setApplicationDestinationPrefixes("/app");
+    
+    // TaskScheduler 생성 및 초기화
+//    org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler scheduler =
+//        new org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler();
+//    scheduler.setPoolSize(1);
+//    scheduler.setThreadNamePrefix("websocket-heartbeat-");
+//    scheduler.initialize();
+    
     registry.enableSimpleBroker("/topic", "/queue");
+//        .setTaskScheduler(scheduler)
+//        .setHeartbeatValue(new long[]{10000, 10000}); // 하트비트 간격 조정
     registry.setUserDestinationPrefix("/user");
   }
 
