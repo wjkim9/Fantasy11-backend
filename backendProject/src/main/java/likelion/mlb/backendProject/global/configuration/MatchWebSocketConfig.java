@@ -42,6 +42,5 @@ public class MatchWebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(matchHandler, "/ws/match")                // 1) 엔드포인트 등록
                 .setHandshakeHandler(new AuthHandshakeHandler(jwtTokenProvider)) // 2) 핸드셰이크 단계 JWT 검증
                 .setAllowedOrigins(frontendHttpUrl);                   // 3) CORS: 지정 Origin만 허용
-        // .setAllowedOriginPatterns("https://*.example.com"); // (선택) 와일드카드 패턴 허용 예시
     }
 }
